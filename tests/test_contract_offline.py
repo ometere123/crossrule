@@ -236,6 +236,9 @@ class CrossruleLifecycle(unittest.TestCase):
         with self.assertRaisesRegex(UserError,'three distinct'):
             self.contract.create_community('X','Description','Charter',self.wallets[0],self.wallets[2],5)
 
+    def test_address_arguments_accept_runtime_address_objects(self):
+        self.assertEqual(self.contract._address(FakeAddress(self.wallets[1])), self.wallets[1])
+
     def test_bilateral_majorities_required(self):
         _,_,rid=self.proposal()
         for slot in (0,1,2):

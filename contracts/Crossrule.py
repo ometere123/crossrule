@@ -150,7 +150,12 @@ class Crossrule(gl.Contract):
 
     def _address(self, address):
         try:
-            result = str(Address(address)).lower()
+            # CLI calldata may decode an address-typed argument as an Address
+            # object even when the public method annotation is a string. Keep
+            # both the direct-test string form and the Studio runtime form
+            # canonical without relying on object stringification.
+            result = (address.as_hex if isinstance(address, Address) else
+                      str(Address(address))).lower()
         except Exception:
             raise gl.vm.UserError("invalid wallet")
         self._require(result != "0x" + "0" * 40, "zero wallet forbidden")
