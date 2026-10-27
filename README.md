@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the hardened source is pushed to `main`, the single corrected contract is deployed to StudioNet, the six-wallet social lifecycle has been executed with six distinct CLI identities, and the Accord Chamber frontend is being verified against that deployment. The live record contains two active communities, one active bilateral room with three preserved policy versions, six stable post IDs, four semantic cases, a finalized application appeal and finalized negative permission controls. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
+**Current release status:** the hardened source is pushed to `main`, the single corrected contract is deployed to StudioNet, and the six-wallet social lifecycle has been executed with six distinct CLI identities. The live record contains two active communities, one active bilateral room with three preserved policy versions, six stable post IDs, four semantic cases, a finalized application appeal and finalized negative permission controls. The final GitHub CI run is green. The existing Vercel URL still serves the prior production build until team-scope approval permits redeploying the corrected contract address; that hosting limitation is reported explicitly rather than conflated with the verified contract evidence. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
 
 ## Exact stack
 
@@ -27,10 +27,11 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
-| Vercel deployment | Final production deployment is recorded in [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) after the final frontend build |
+| Vercel deployment | Existing URL: [crossrule.vercel.app](https://crossrule.vercel.app); corrected-contract redeployment is pending Vercel team-scope approval |
 | Contract | `0xf9bF16af4253064E349fF0fCfc7472f75c63110e` |
 | Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xf9bF16af4253064E349fF0fCfc7472f75c63110e) |
 | Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951) |
+| Final GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40553650933) at `dbac5ccf7d3cfcad7cc59590e09e95eb62b613df` |
 | Source | SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e`, commit `cf96ee8e88ef83d2b5ffc8cbbe9f24b389943dea` |
 | Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; five validator vote slots were exposed and deployed source matched the committed LF bytes exactly (44,575 bytes) |
 

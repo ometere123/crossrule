@@ -40,14 +40,14 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
 * Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xf9bF16af4253064E349fF0fCfc7472f75c63110e)
 * Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951)
-* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app); final Vercel deployment provenance is updated here when the new build reaches `READY`
+* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app); the existing URL was inspected, but corrected-contract redeployment is pending Vercel team-scope approval
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Final CI: updated after the final hardening commit; the exact run URL and SHA are recorded in `LIVE_EVIDENCE.md`
+* Final CI: [run 40553650933](https://github.com/ometere123/crossrule/actions/runs/40553650933), successful 9/9 jobs at `dbac5ccf7d3cfcad7cc59590e09e95eb62b613df`
 
 ## Production UI evidence
 
-The public Accord Chamber was verified against `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. Each viewport had no horizontal overflow, page errors or console errors. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative; live counts and records below it come from the deployed contract.
+The public Accord Chamber interface was inspected at `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. The committed frontend passed the desktop/mobile Playwright suite and has no known application console errors; the current public URL still serves the prior deployment, so its live counters are not treated as evidence for the corrected contract. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative.
 
 ## Reviewer walkthrough
 
