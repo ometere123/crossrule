@@ -86,17 +86,17 @@ def test_posts_continue_past_150_with_bounded_direct_pages(direct_deploy, direct
     contract = direct_deploy(CONTRACT)
     rid = ratified_room(contract, direct_vm, direct_accounts)
     direct_vm.sender = direct_accounts[0]
-    for _ in range(200):
+    for _ in range(300):
         contract.publish_post(rid, 0, TEXT)
     first = parsed(contract.list_posts(rid, 0, 20))
     middle = parsed(contract.list_posts(rid, 140, 20))
-    last = parsed(contract.list_posts(rid, 180, 20))
+    last = parsed(contract.list_posts(rid, 280, 20))
     assert [post["id"] for post in first] == list(range(1, 21))
     assert [post["id"] for post in middle] == list(range(141, 161))
-    assert [post["id"] for post in last] == list(range(181, 201))
-    assert parsed(contract.list_posts(rid, 200, 20)) == []
+    assert [post["id"] for post in last] == list(range(281, 301))
+    assert parsed(contract.list_posts(rid, 300, 20)) == []
     with direct_vm.expect_revert("invalid post cursor"):
-        contract.list_posts(rid, 201, 20)
+        contract.list_posts(rid, 301, 20)
 
 
 def test_nonmember_cannot_post(direct_deploy, direct_vm, direct_accounts):
