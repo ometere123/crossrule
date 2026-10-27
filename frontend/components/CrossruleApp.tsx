@@ -4,7 +4,7 @@ import {ArrowRight,ArrowLeft,BookOpen,CheckCircle2,Handshake,Plus,RefreshCw,Scal
 import AppShell,{type Screen} from './AppShell';
 import LandingPage from './LandingPage';
 import {Empty,Field,Panel,SelectField,Status} from './Forms';
-import {connectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,transactionUrl,write,type TransactionObservation} from '@/lib/chain';
+import {connectedWallet,connectWallet,disconnectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,transactionUrl,write,type TransactionObservation} from '@/lib/chain';
 import {EMPTY_COUNTS,formatTime,policyOf,sampleClauses,secondsLeft,threshold,truncate,type Case,type CaseListItem,type Community,type CommunityListItem,type Counts,type CrossrulePost,type Room,type RoomListItem} from '@/lib/types';
 
 type FormState=Record<string,string>;
@@ -167,6 +167,8 @@ export default function CrossruleApp(){
   useEffect(()=>{
     const provider=window.ethereum;
     if(!provider?.on)return;
+    let alive=true;
+    void connectedWallet().then(next=>{if(alive&&next)setWallet(next);}).catch(()=>{ /* provider may not expose read-only accounts */ });
     const accountsChanged=(value:unknown)=>{
       const values=Array.isArray(value)?value:[];
       const next=Array.isArray(values)&&typeof values[0]==='string'?values[0].toLowerCase():'';
@@ -180,6 +182,7 @@ export default function CrossruleApp(){
     provider.on('accountsChanged',accountsChanged);
     provider.on('chainChanged',chainChanged);
     return()=>{
+      alive=false;
       provider.removeListener?.('accountsChanged',accountsChanged);
       provider.removeListener?.('chainChanged',chainChanged);
     };
@@ -245,6 +248,12 @@ export default function CrossruleApp(){
       }else{setTxState('failed');setError(message);}
       return '';
     }finally{setWorking(false);}
+  }
+  async function disconnect(){
+    const revoked=await disconnectWallet();
+    setWallet('');
+    setError('');
+    setNotice(revoked?'Wallet disconnected from CROSSRULE.':'Wallet session cleared. Your extension may still retain site access.');
   }
   const blockedByUnknown=txState==='unknown';
   const act=(method:string,args:unknown[],label:string,eligible=true)=>
@@ -344,9 +353,9 @@ export default function CrossruleApp(){
   const responseEligible=Boolean(caseFile?.status==='APPEAL_OPEN'&&caseFile.appeal&&walletKey&&((caseFile.appeal.appellant.toLowerCase()===caseFile.author.toLowerCase()?caseFile.reporter:caseFile.author).toLowerCase()===walletKey)&&!caseFile.appeal.response_submitted);
 
   if(landing)return <LandingPage counts={counts} communities={communities} rooms={rooms} cases={cases} loading={loading} wallet={wallet}
-    error={error} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))} onEnter={enterApplication}/>;
+    error={error} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))} onDisconnect={()=>void disconnect()} onEnter={enterApplication}/>;
 
-  return <AppShell screen={screen} navigate={open} wallet={wallet} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))} onHome={()=>{setLanding(true);window.scrollTo({top:0,behavior:'smooth'});}}>
+  return <AppShell screen={screen} navigate={open} wallet={wallet} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))} onDisconnect={()=>void disconnect()} onHome={()=>{setLanding(true);window.scrollTo({top:0,behavior:'smooth'});}}>
     {loading&&<div className="small muted row"><RefreshCw size={14}/> Refreshing finalized chain state…</div>}
     {error&&<div role="alert" className="notice error" style={{marginBottom:16}}>{error}</div>}
     {notice&&<div role="status" className="notice" style={{marginBottom:16}}>{notice}</div>}

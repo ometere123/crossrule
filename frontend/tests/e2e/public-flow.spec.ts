@@ -57,3 +57,27 @@ test('injected wallet connects and switches from the wrong network',async({page}
   await page.getByRole('button',{name:'Create a community'}).first().click();
   await expect(page.getByRole('button',{name:'Register community'})).toBeVisible();
 });
+
+test('connected wallet rehydrates after refresh and exposes disconnect',async({page})=>{
+  await page.addInitScript(()=>{
+    let accounts=['0x'+'2'.repeat(40)];
+    window.ethereum={
+      request:async({method})=>{
+        if(method==='eth_accounts'||method==='eth_requestAccounts')return accounts;
+        if(method==='eth_chainId')return '0xf22f';
+        if(method==='wallet_revokePermissions'){accounts=[];return null;}
+        throw new Error(`Unmocked EIP-1193 request: ${method}`);
+      },
+      on:()=>undefined,
+      removeListener:()=>undefined
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Connect wallet'}).click();
+  await expect(page.getByRole('button',{name:'Reconnect wallet'})).toContainText('0x2222');
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Reconnect wallet'})).toContainText('0x2222');
+  await expect(page.getByRole('button',{name:'Disconnect'})).toBeVisible();
+  await page.getByRole('button',{name:'Disconnect'}).click();
+  await expect(page.getByRole('button',{name:'Connect wallet'})).toBeVisible();
+});

@@ -13,8 +13,8 @@ const links:{id:Screen;label:string;icon:typeof Scale}[]=[
   {id:'activity',label:'My activity',icon:UserCircle},
   {id:'audit',label:'Public audit',icon:History}
 ];
-export default function AppShell({screen,navigate,wallet,onConnect,onHome,children}: {
-  screen:Screen;navigate:(id:Screen)=>void;wallet:string;onConnect:()=>void;onHome?:()=>void;children:ReactNode
+export default function AppShell({screen,navigate,wallet,onConnect,onDisconnect,onHome,children}: {
+  screen:Screen;navigate:(id:Screen)=>void;wallet:string;onConnect:()=>void;onDisconnect:()=>void;onHome?:()=>void;children:ReactNode
 }){
   return <div className="shell">
     <aside className="sidebar">
@@ -33,8 +33,11 @@ export default function AppShell({screen,navigate,wallet,onConnect,onHome,childr
     </aside>
     <main className="main">
       <div className="topbar"><div className="row topbar-context"><span className="topbar-kicker">ACCORD CHAMBER</span><span className="pill">GENLAYER SOCIAL</span><span className="pill muted">Community Moderation</span></div>
-        <button className={`btn ${wallet?'secondary':''}`} onClick={onConnect} aria-label={wallet?'Reconnect wallet':'Connect wallet'}>
-          <Network size={15}/>{wallet?truncate(wallet):'Connect wallet'}</button>
+        <div className="row wallet-actions">
+          {wallet&&<button className="btn tiny secondary" onClick={onDisconnect}>Disconnect</button>}
+          <button className={`btn ${wallet?'secondary':''}`} onClick={onConnect} aria-label={wallet?'Reconnect wallet':'Connect wallet'}>
+            <Network size={15}/>{wallet?truncate(wallet):'Connect wallet'}</button>
+        </div>
       </div>
       {onHome&&<button className="workspace-home" onClick={onHome}>← Return to public landing</button>}
       {!isConfigured&&<div className="notice" style={{marginBottom:22}}><strong>Source build · not deployed.</strong> Wallet actions become available when a source-matched StudioNet contract address is configured. No deployment is implied.</div>}

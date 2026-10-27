@@ -59,6 +59,26 @@ export async function connectWallet():Promise<string> {
   return accounts[0].toLowerCase();
 }
 
+export async function connectedWallet():Promise<string> {
+  const p=window.ethereum;
+  if(!p)return '';
+  const accounts=await p.request({method:'eth_accounts'}) as string[];
+  return accounts?.[0]?.toLowerCase()??'';
+}
+
+export async function disconnectWallet():Promise<boolean> {
+  const p=window.ethereum;
+  if(!p)return false;
+  try{
+    await p.request({method:'wallet_revokePermissions',params:[{eth_accounts:{}}]});
+    return true;
+  }catch{
+    // EIP-1193 does not require permission revocation. The caller still clears
+    // the app session and reports that the extension may retain site access.
+    return false;
+  }
+}
+
 function finalized(value:Record<string,unknown>) {
   return value.statusName==='FINALIZED'||value.status_name==='FINALIZED'||value.status==='FINALIZED'||value.status===7;
 }

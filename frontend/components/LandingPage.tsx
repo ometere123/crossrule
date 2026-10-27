@@ -30,6 +30,7 @@ type LandingProps = {
   wallet: string;
   error: string;
   onConnect: () => void;
+  onDisconnect: () => void;
   onEnter: (screen?: 'overview' | 'communities' | 'create' | 'rooms' | 'cases' | 'audit') => void;
 };
 
@@ -99,7 +100,7 @@ function LiveRecord({label, value, tone}: {label: string; value: number; tone: '
   return <div className={`live-record ${tone}`}><span>{label}</span><strong>{value}</strong><small>{isConfigured ? 'finalized contract state' : 'awaiting deployment configuration'}</small></div>;
 }
 
-export default function LandingPage({counts, communities, rooms, cases, loading, wallet, error, onConnect, onEnter}: LandingProps) {
+export default function LandingPage({counts, communities, rooms, cases, loading, wallet, error, onConnect, onDisconnect, onEnter}: LandingProps) {
   return <main className="landing-page">
     <nav className="landing-nav" aria-label="Public navigation">
       <a href="#top" aria-label="CROSSRULE home"><Wordmark/></a>
@@ -111,6 +112,7 @@ export default function LandingPage({counts, communities, rooms, cases, loading,
       </div>
       <div className="landing-nav-actions">
         <button className="landing-enter" onClick={() => onEnter('overview')}>Enter application <ArrowRight size={15}/></button>
+        {wallet&&<button className="landing-connect" onClick={onDisconnect}>Disconnect</button>}
         <button className="landing-connect" onClick={onConnect} aria-label={wallet ? 'Reconnect wallet' : 'Connect wallet'}>{wallet ? truncate(wallet) : 'Connect wallet'}</button>
       </div>
     </nav>

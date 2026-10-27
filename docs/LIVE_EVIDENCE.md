@@ -23,8 +23,25 @@ This section is the current closeout record. The older ledger below is retained 
 | Exact parity | `byteEqual: true`, checked by `scripts/verify_deployed_source.mjs` using `gen_getContractCode` |
 | Latest full GitHub CI | [run 40560229019](https://github.com/ometere123/crossrule/actions/runs/40560229019), `success`, 9/9 jobs, exact SHA `601f221dc172f9e8aa7b061252386330c9539be9` |
 | Production frontend | [`https://crossrule.vercel.app`](https://crossrule.vercel.app), [READY Vercel deployment `dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ), uploaded from exact frontend checkout at Git commit `601f221dc172f9e8aa7b061252386330c9539be9`; verified HTTP 200, production Playwright `10 passed` across desktop/mobile and live counts 2/1/4/6 |
-| Production browser wallet | The final Chrome profile exposed no `window.ethereum` provider. No CLI key was imported into the browser and no browser-wallet write is claimed; injected-wallet behavior remains covered by the provider test doubles and the public production read path was verified. |
+| Production browser wallet | Convert Chrome profile with Rabby injected provider. No CLI key was imported into the browser. A real browser-signed community registration was finalized successfully below; the subsequent founder-consent lifecycle remains in progress. |
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; all three list views returned `[]` |
+
+### Fresh browser-wallet verification
+
+This is a new public record appended to the existing source-matched contract. It is intentionally separate from the completed six-CLI-wallet ledger below. The browser wallet signed the transaction through the Convert Chrome profile; no private key was imported into the page.
+
+| Field | Observed value |
+| --- | --- |
+| Browser profile | Convert Chrome + Rabby injected EIP-1193 provider |
+| Founder A / signer | `0x23187BF36c9B935189cDa33DEEEc6912bC2A211B` |
+| Founder B | `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b` |
+| Founder C | `0x1F21Be13E3Fd277C5D3115b7Fb8135de19A427F5` |
+| Action | `create_community` — `Browser Accord Guild` |
+| Transaction | [`0x10e877c3aeaa11159008aa6d8144f488e6cac28952989098cc3cfbf7e798f173`](https://explorer-studio.genlayer.com/tx/0x10e877c3aeaa11159008aa6d8144f488e6cac28952989098cc3cfbf7e798f173) |
+| UI lifecycle | `Submitted — inspect finality` → `Finalized · execution succeeded` |
+| Contract readback | Community 3 exists in `FOUNDING` state with the three recorded founder addresses; other two founder consents are still required |
+
+The live page also now rehydrates an already-authorized account with read-only `eth_accounts` after refresh and exposes an explicit disconnect control. Provider permission revocation is attempted when supported; otherwise the app clears its local session and tells the user that extension site access remains wallet-managed.
 
 The historical deployment used CRLF bytes and is retained below for provenance. The current repository enforces LF for `contracts/Crossrule.py` through `.gitattributes`; deployment source retrieval is now an exact-byte check, not normalized-text comparison.
 
