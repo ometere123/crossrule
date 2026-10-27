@@ -64,11 +64,11 @@ The audit found and corrected the following high-risk paths:
 * Appeal reversal removes only its own restriction; an upheld serious appeal preserves the original expiry instead of restarting it.
 * The frontend now validates bounded arguments, tracks account/network changes, prevents duplicate writes after unknown outcomes, and requires finalized successful execution before announcing success.
 
-These corrections are regression-tested by 55 offline tests, 19 genuine Direct Mode tests and 27/27 killed purposeful mutations. The results are implementation evidence, not an external security certification.
+These corrections are regression-tested by 61 offline tests, 22 genuine Direct Mode tests in the Linux CI runner and 31/31 killed purposeful mutations. The results are implementation evidence, not an external security certification.
 
 ## Current residual findings
 
-1. The fresh six-wallet StudioNet lifecycle is live-verified, including two communities, counterpart consent, bilateral room governance, feature/unfeature, policy versions 1–3, six posts, four semantic cases, a finalized application appeal and finalized negative permission controls. The live limitation is that public receipts expose validator vote/status metadata and structured leader output, not every validator's private prompt or reasoning; no private validator trace is claimed.
+1. The corrected-contract six-wallet StudioNet lifecycle is live-verified, including two communities, applicant consent, counterpart consent, an expired proposal, bilateral room governance, feature/unfeature, policy versions 1–2, four posts, two semantic cases, an upheld application appeal and finalized negative permission controls. The live limitation is that public receipts expose validator vote/status metadata and structured leader output, not every validator's private prompt or reasoning; no private validator trace is claimed.
 2. Public TreeMap JSON is intentionally permanent/public. There is no privacy or deletion guarantee.
 3. The root JavaScript development tree reports six advisories and the frontend development tree reports three dev-only Vitest/tinypool advisories. Production-only audits are clean. Fixing them requires a breaking test-toolchain migration that was not silently introduced into the locked stack.
 4. genlayer-test==0.29.2 has a known Windows temporary-file cleanup defect and a runner archive-name mismatch. CI uses a reproducible pinned-runner workaround; the Windows-only local shim is not part of the contract or production runtime.

@@ -38,12 +38,12 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 
 * Frontend: [crossrule.vercel.app](https://crossrule.vercel.app)
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
-* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xf9bF16af4253064E349fF0fCfc7472f75c63110e)
-* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951)
+* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608)
+* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0)
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Latest full CI: [run 40560229019](https://github.com/ometere123/crossrule/actions/runs/40560229019), successful 9/9 jobs at `601f221dc172f9e8aa7b061252386330c9539be9`
+* Latest full CI for the implementation commit: [run 40588705408](https://github.com/ometere123/crossrule/actions/runs/40588705408), successful 9/9 jobs at `4b5f8ea16722c713c2163219c044f000e02b743e`
 
 ## Production UI evidence
 
@@ -59,7 +59,7 @@ The public Accord Chamber interface was inspected at `https://crossrule.vercel.a
 
 ## Known limitations
 
-The deployed address has finalized exact-byte source parity and a completed six-CLI-wallet live social lifecycle: two communities, one active room, six stable posts, three policy versions, four semantic cases, one application appeal and finalized negative controls. A separate fresh browser-wallet registration has now also finalized successfully for `Browser Accord Guild`; its two remaining founder-consent transactions are not yet recorded in this closeout. StudioNet receipts expose validator status/vote metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, six clauses, three context posts, one challenge per post, one application appeal, 20 records per public page and 64 retained history entries; posts have no permanent lifetime cap. No CLI key was imported into the browser. Dependency advisories are reported rather than hidden. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
+The final deployed address has finalized exact-byte source parity and a completed fresh six-CLI-wallet live social lifecycle: two communities, one rejected expired proposal, one active room, four stable posts, two semantic cases, one upheld application appeal and finalized negative controls. The earlier browser-wallet registration was performed against the superseded contract and is retained as historical proof of the injected EIP-1193 path; no CLI key was imported into the browser. StudioNet receipts expose validator status/vote metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, six clauses, three context posts, one challenge per post, one application appeal, 20 records per public page and bounded active indexes; posts have no permanent lifetime cap. Dependency advisories are reported rather than hidden. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
 
 ## Portal review framing
 

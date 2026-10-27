@@ -19,15 +19,15 @@ This document is the operational handoff for the verified source, StudioNet depl
 
 ## Current handoff values
 
-* Contract: `0xf9bF16af4253064E349fF0fCfc7472f75c63110e`
-* Deployment transaction: [`0xde0b737e…22951`](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951)
+* Contract: `0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608`
+* Deployment transaction: [`0x6896ffebe…db6c0`](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0)
 * Deployment result: `FINALIZED`, `MAJORITY_AGREE`, leader `SUCCESS`
 * Frontend: [https://crossrule.vercel.app](https://crossrule.vercel.app)
-* Vercel deployment: [READY `dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ), uploaded from Git commit `601f221dc172f9e8aa7b061252386330c9539be9`
-* Source parity: `gen_getContractCode` returned 44,575 bytes that matched `contracts/Crossrule.py` byte-for-byte; SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e`
-* Deployed contract source commit: `cf96ee8e88ef83d2b5ffc8cbbe9f24b389943dea`
+* Vercel deployment: [READY `dpl_72Ew7NJTAUTKmx1VvoDmE1RoagcE`](https://vercel.com/delealufejoel-4184s-projects/crossrule/72Ew7NJTAUTKmx1VvoDmE1RoagcE), built from the corrected source checkout
+* Source parity: `gen_getContractCode` returned 47,060 bytes that matched `contracts/Crossrule.py` byte-for-byte; SHA-256 `2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b`
+* Deployed contract source commit: `4b5f8ea16722c713c2163219c044f000e02b743e`
 * Full ledger: [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
-* Live readback: communities 2, rooms 1, posts 6, cases 4; the room preserves policy versions 1–3; case 4 closed after a reporter appeal that retained `NO_VIOLATION`.
+* Live readback: communities 2, room records 2 (one rejected, one active), posts 4, cases 2; the room preserves policy versions 1–2; case 2 closed after an upheld `MINOR_BREACH` appeal.
 
 ## Final engineer's non-optional checks
 
@@ -37,8 +37,8 @@ This document is the operational handoff for the verified source, StudioNet depl
 - Inspect contract for GenVM resource limits, storage constraints, exception behavior, no privileged paths, and semantic LLM consensus under real validators.
 - Inspect frontend for every actionable call and read signature; test connected and disconnected provider behavior, chain switching, finalized receipt parsing, bad RPC/timeout, mobile ergonomics, accessibility, and content safety.
 - Deploy exactly the reviewed **single contract source** to StudioNet; this is complete for the address and deployment transaction above. The source parity check uses `gen_getContractCode`, decodes the returned base64 bytes and compares them directly against the LF repository source. The historical deployment's CRLF mismatch remains documented as historical evidence; it is not the current deployment.
-- Configure only `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` in Vercel. The current production alias is configured with `0xf9bF16af4253064E349fF0fCfc7472f75c63110e` and was verified after the READY deployment above. Redeploy after any future frontend commit intended to be the final presentation SHA.
-- Execute and archive genuine positive and negative multi-wallet lifecycle evidence in `docs/LIVE_EVIDENCE.md` or via verifiable links with identities and links, never secret keys. This is complete for the current deployment, including counterpart consent, feature/unfeature, three policy versions, six-post pagination, four semantic cases, an application appeal and an outsider rollback; preserve the six encrypted CLI keystores.
+- Configure only `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` in Vercel. The current production alias is configured with `0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608` and was verified after the READY deployment above.
+- Execute and archive genuine positive and negative multi-wallet lifecycle evidence in `docs/LIVE_EVIDENCE.md` or via verifiable links with identities and links, never secret keys. This is complete for the current deployment, including counterpart consent, feature/unfeature, two policy versions, four posts, two semantic cases, an application appeal and finalized negative controls; preserve the six encrypted CLI keystores.
 - Do not claim a network-level finality or validator decision if it is a local mock, pending receipt or UI-only transaction.
 - Verify all application timers can be chosen from the frontend; explain why network consensus/finality timing is external.
 - Produce final acceptance report mapping concrete evidence to the four 5/5/5/5 target axes, including remaining risks and the external reviewer outcome when available. Do not self-award the Portal score.

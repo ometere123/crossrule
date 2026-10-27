@@ -112,7 +112,7 @@ stateDiagram-v2
   APPEAL_FROZEN --> CLOSED: Reassessment and final app ruling
 ```
 
-Case decisions classify evidence, not human identity. The only accepted outputs are four enumerated findings. They must cite the challenged clause ID, contain an extract from the specific frozen post (8–180 bytes), and include a bounded reason. The validator re-runs semantic assessment independently; mismatched classifications fail, rather than quietly registering an unreliable ruling. Both `original_decision` and `original_finding` remain stored after an appeal; the current `decision` and `finding` reflect its later result, and the appeal's own decision is retained as well.
+Case decisions classify evidence, not human identity. The only accepted outputs are four enumerated findings. They must cite the challenged clause ID, contain a non-whitespace exact extract from the specific frozen post (1–180 UTF-8 bytes), and include a bounded reason. The validator re-runs semantic assessment independently; mismatched classifications fail, rather than quietly registering an unreliable ruling. Both `original_decision` and `original_finding` remain stored after an appeal; the current `decision` and `finding` reflect its later result, and the appeal's own decision is retained as well. A one-byte or short Unicode post may use the complete post as its materially relevant anchor.
 
 - `NO_VIOLATION`: post `VISIBLE` or `RESTORED`; no suspension.
 - `INSUFFICIENT_EVIDENCE`: post `VISIBLE` or `RESTORED`; no suspension.
@@ -166,7 +166,7 @@ The browser has no private-key imports, mnemonic field, secret-bearing server ro
 
 ## Deployed record used for review
 
-The source-matched StudioNet deployment at `0xf9bF16af4253064E349fF0fCfc7472f75c63110e` reads two active communities, one active room, six posts and four cases. The room preserves policy versions 1–3; case 1 was opened under version 1, while case 4 completed a distinct application appeal under version 3. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for the transaction-level provenance.
+The final source-matched StudioNet deployment at `0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608` reads two active communities, one rejected expired proposal, one active room, four posts and two cases. The active room preserves policy versions 1–2; case 1 is a finalized `NO_VIOLATION`, and case 2 is a finalized `MINOR_BREACH` with an upheld application appeal. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for transaction-level provenance.
 
 The deployed source was validated by the genuine GenVM linter as 38 methods: 10 views and 28 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
 

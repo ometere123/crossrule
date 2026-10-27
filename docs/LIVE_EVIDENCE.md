@@ -1,8 +1,89 @@
 # CROSSRULE live evidence ledger
 
-## Current source-matched deployment and fresh lifecycle
+## Current final source-matched deployment and fresh lifecycle
 
-This section is the current closeout record. The older ledger below is retained as historical evidence for the superseded deployment and is not evidence for the current product address.
+This is the final corrected deployment record. It supersedes the older deployment and browser-registration sections below, which remain in this file only as historical evidence. The corrected contract source is commit 4b5f8ea16722c713c2163219c044f000e02b743e.
+
+### Deployment provenance
+
+| Field | Observed value |
+| --- | --- |
+| Network | GenLayer StudioNet |
+| Chain ID | 61999 (0xf22f) |
+| RPC | https://studio.genlayer.com/api |
+| CLI / SDK | repository-local genlayer 0.39.1 / genlayer-js 1.1.8 |
+| Contract | [0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608](https://explorer-studio.genlayer.com/address/0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608) |
+| Deployment signer | praest-deployer / 0x0d5540e0ad4b92aa0ad4e5f1b8cd645ee1e363e7 |
+| Deployment transaction | [0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0) |
+| Deployment timestamp | 2026-10-27T21:44:36.204911+00:00 |
+| Deployment result | FINALIZED, MAJORITY_AGREE, leader SUCCESS |
+| Git commit | 4b5f8ea16722c713c2163219c044f000e02b743e |
+| Contract source | 47,060 LF bytes; SHA-256 2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b |
+| Deployed source | 47,060 decoded bytes; SHA-256 2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b |
+| Exact parity | byteEqual: true, checked by scripts/verify_deployed_source.mjs with gen_getContractCode |
+| CI for implementation commit | [run 40588705408](https://github.com/ometere123/crossrule/actions/runs/40588705408), success, 9/9 jobs |
+| Production frontend | https://crossrule.vercel.app, READY deployment dpl_72Ew7NJTAUTKmx1VvoDmE1RoagcE; the public alias returned HTTP 200 and read the new contract's empty initial state before the lifecycle |
+
+The deployed-source SHA is intentionally recorded twice only as a provenance check: the repository file and decoded StudioNet response are byte-for-byte equal. The exact verification command was:
+
+    node scripts/verify_deployed_source.mjs contracts/Crossrule.py 0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608 https://studio.genlayer.com/api
+
+Immediate deployment readbacks were get_counts = communities 0, rooms 0, posts 0, cases 0, with empty community, room and case lists.
+
+### Six signing identities
+
+All six encrypted CLI keystores were verified on StudioNet 61999, were distinct, and remain preserved. No private key, mnemonic or password is recorded.
+
+| Role | CLI alias | Public address |
+| --- | --- | --- |
+| A1 | party_a | 0xac3ac69dc0bde389256dd6748c75817ead9286d9 |
+| A2 | walletA | 0x951e6b75530774ff82321a5ae54e14f778f0c855 |
+| A3 | walletB | 0xb845a69860ba4cdf19cfdc5afbaf2e20b6be86b0 |
+| B1 | conveyance-deployer | 0x21892bba93381d94037fb4aab01cafbdf4453b56 |
+| B2 | slash-owner | 0x9dce0dc7005d6b92e03c27640081096cd36dd468 |
+| B3 | termsmet-studionet-submitter | 0xb5ecd6dda36b370aca4af5e2005d8e2ae89c6db2 |
+
+The extra applicant was party_b, 0xa7eeae0e93793e3146cb14b0700251b8b0ebadfb. All encrypted keystores remain local and were not imported into the browser.
+
+### Fresh corrected-contract lifecycle
+
+Every transaction below was signed by the stated CLI identity, finalized on StudioNet, and checked against a contract readback. A rollback is retained as negative evidence; a finalized receipt is not described as successful execution when the leader result was ERROR.
+
+| Stage | Transactions | Verified readback |
+| --- | --- | --- |
+| Community A | [create 0x607b5c4d...01260d](https://explorer-studio.genlayer.com/tx/0x607b5c4d3725c308628e96242b3d674a056f62db781c19fc9d4ac8427201260d), [A2 0xebb0da2e...50301a](https://explorer-studio.genlayer.com/tx/0xebb0da2e202de1e8ae4ec7aa14eaf25bb1cd7b91deb1e1a6011dfeea5e50301a), [A3 0xd9e060a7...c10d07](https://explorer-studio.genlayer.com/tx/0xd9e060a7956456a90b71a9784f2103748b2da59c15561bd5b21a5e5f74c10d07) | Builders Collective, community 1 ACTIVE with three distinct founders |
+| Community B | [create 0x553492b1...0ed80b](https://explorer-studio.genlayer.com/tx/0x553492b1c030104b700cdd08ed066ab8aa85a254e547450455ac0ecd8b0ed80b), [B2 0xbc79e057...5dc79a](https://explorer-studio.genlayer.com/tx/0xbc79e057276d93697aebd993218cf268c678d581ecbb7a4d6eb3012ebc5dc79a), [B3 0x6a679db0...ac482](https://explorer-studio.genlayer.com/tx/0x6a679db01f77410b3c82c5ba1b6bb8dad1481e82b809fb74be2aacb6fa9ac482) | Research Forum, community 2 ACTIVE with three distinct founders |
+| Admission | [proposal 0x85130e51...eff16f](https://explorer-studio.genlayer.com/tx/0x85130e51722d2215bb1412c50fd3249d201fdcac1a2077d971f9dff482eff16f), [applicant 0x4eebe2d7...8d49f](https://explorer-studio.genlayer.com/tx/0x4eebe2d7ba986cc17276b583113bc14559df4de4518b5dec48f03374c988d49f), [A1 0xa1ec9492...d7e6e1](https://explorer-studio.genlayer.com/tx/0xa1ec9492c0ffa49c3c2b1c2dd20c247c23ca01fa3b11e2ac28face6d5cd7e6e1), [A2 0x1746a7d0...649a02](https://explorer-studio.genlayer.com/tx/0x1746a7d0dfb59f5a5d619e35b34299cfcd3bb922f1d50bb7047b908e21649a02), [finalize 0xcf07e58d...75997](https://explorer-studio.genlayer.com/tx/0xcf07e58d76c7b994d3b357a5f03f9b1ad73de522594caca15d697e642ab75997) | Frozen roster was 3, so 2 approvals met the threshold; only then did community 1 contain 4 members |
+| Charter | [proposal 0xf9fbf206...e0c880](https://explorer-studio.genlayer.com/tx/0xf9fbf2064abea27bd1a3c66c946240f515abc7f6ceb4b09a0450eebccde0c880), [A1 0x720bdaaa...d96793](https://explorer-studio.genlayer.com/tx/0x720bdaaa92142dc7838716da322ba8035c5c04331383aa30e88e7b993ad96793), [A2 0x28fbf0c9...1ea9edb](https://explorer-studio.genlayer.com/tx/0x28fbf0c93da59778382630af209c69fbd9f06d5501ff280a52c76bcd31ea9edb), [A3 0x88b27663...f62e9a](https://explorer-studio.genlayer.com/tx/0x88b27663aa50956bcaf4ee26772566e55a543536803852e0b907ebb5b2f62e9a), [finalize 0xf4f86881...52f58f](https://explorer-studio.genlayer.com/tx/0xf4f86881a0f478b8fbd8fc8bd2d331f419f1e93630e882d0a97dfbda5852f58f) | Charter history preserves v1 and v2 |
+| Room proposal / expiry control | [proposal 0x3f7fe25c...8d67f](https://explorer-studio.genlayer.com/tx/0x3f7fe25c6dea85433d5a00b78bb26a510f6da6132b12477100c8f7798a68d67f), [counterpart 0xf3322cfa...03ba7](https://explorer-studio.genlayer.com/tx/0xf3322cfab2c6062c23908efdce24634934f977e8fbc3bfb28c9b9bbad4035ba7), [expire 0x356a146c...088c1c6](https://explorer-studio.genlayer.com/tx/0x356a146c830dceee9067bdbf2fceb295cd1aaef329fe381d56d0dda5a088c1c6) | Room 1 rejected after expiry; reservation cleanup released |
+| Room 2 bilateral ratification | [proposal 0x10b6c1b2...b8bbf2](https://explorer-studio.genlayer.com/tx/0x10b6c1b2973f922beff0c24f9f260aac8e6ee1d085271758ce54ecffbbb8bbf2), [consent 0x0bf0400e...3c2912](https://explorer-studio.genlayer.com/tx/0x0bf0400eea76c1dc1810f7119f28c9db29f6b2cc550861fc1ae55cfa223c2912), [A1 0xe3e16604...36df9d0](https://explorer-studio.genlayer.com/tx/0xe3e16604d383fcb18f5676bd97ca7cb2533d7cfd51aafa06e89902da136df9d0), [A2 0x097565a0...3d5d0f3](https://explorer-studio.genlayer.com/tx/0x097565a095276f83a35d9f1d6628fbd7444f6c37ffa9423245a3daa953d5d0f3), [A3 0x0a1d1727...0566e1](https://explorer-studio.genlayer.com/tx/0x0a1d172737715c363fd1aae033d058124c7014c315d06e9528c78f1a970566e1), [B1 0x6dc235ea...44acee](https://explorer-studio.genlayer.com/tx/0x6dc235ea053fcc24dfbcb045ef1074a56468e0d417bcabcab3122eb20144acee), [B2 0x384a21ef...5c681](https://explorer-studio.genlayer.com/tx/0x384a21ef57b5ed2eaf1740da479afb28f0cb64d0ab892ae47facfb665095c681), [B3 0xab4c5c62...f8453](https://explorer-studio.genlayer.com/tx/0xab4c5c5b62d763e3dbd00c43df119a40cac557060517dbd279773cec3cff8453), [finalize 0xe4c809ba...7415ba](https://explorer-studio.genlayer.com/tx/0xe4c809ba3423a7834548c4f1505d2016edcbb2d319d05ec152474a7c287415ba) | Room 2 ACTIVE; independent thresholds were A 3/4 and B 3/3; policy v1 |
+| Posts and reply | [post 1 0x98db56a1...b330b910](https://explorer-studio.genlayer.com/tx/0x98db56a19aa8fe0d8550f60090c9041ff6762345d111fad235b9bbcbf330b910), [reply 2 0x8375375b...26d33c](https://explorer-studio.genlayer.com/tx/0x8375375bd266639f60a5dd94de266d3b1e310139ee9de326e60f63732426d33c) | Stable IDs 1 and 2, parent relation 2 -> 1, same room |
+| Feature / unfeature | [feature proposal 0xaefee80c...2c326](https://explorer-studio.genlayer.com/tx/0xaefee80ce304120ae52cffc60bb5fd537a0a495d55947aa46428fc2c2cc2c326), [feature finalize 0xf15c6610...4eaa0](https://explorer-studio.genlayer.com/tx/0xf15c6610c3932ccb0dcf9aec694c441c11ecd583966c1a72a5f8206ecfe4eaa0), [unfeature proposal 0x3f294484...a6501](https://explorer-studio.genlayer.com/tx/0x3f294484e191d8fbb1b84b4ec115e7b023e54f9ea6c642adf3e02609d3aa6501), [unfeature finalize 0xf2d7a7b8...d3912d](https://explorer-studio.genlayer.com/tx/0xf2d7a7b8ac24802112db06c5a0948d3106eee658d26e2561464098f947d3912d) | featured_post readback 0 -> 1 -> 0 |
+| Policy amendment | [proposal 0x3d0526d1...a3f32](https://explorer-studio.genlayer.com/tx/0x3d0526d1496a1f80fadd2fc2ebd10918b289a331855a64f30ce51483a19a3f32), [consent 0xb269d190...240d5](https://explorer-studio.genlayer.com/tx/0xb269d190b113064981d641b56a50c2d73bad965f6d4e9c54da765977dcb240d5), [finalize 0x986290b7...408e7](https://explorer-studio.genlayer.com/tx/0x986290b756b8b8ee6dc9fb26e1b3c588ecffc69ab55e605521a775e4774408e7) | Room 2 active version 2; version 1 remains in policy history |
+| Case 1 | [post 3 0x84150b53...7085b](https://explorer-studio.genlayer.com/tx/0x84150b5332b7b9f40fe0c983b0733eb2a0d490e723a03b30fd253cd47fc7085b), [open 0xe13f608a...93567](https://explorer-studio.genlayer.com/tx/0xe13f608a2395980ba9fd4b97ade5c141352094b3ab788e9000c52ba48c893567), [defense 0x42963e32...8c673](https://explorer-studio.genlayer.com/tx/0x42963e32b18394e44bdf25f352c34b9d99a3171648034e83833f7f93b928c673), [freeze 0xee97dbf9...9b976](https://explorer-studio.genlayer.com/tx/0xee97dbf9cbc1d4c93baac729d0c555b6c52030c85f0011eb73c6324c8a79b976), [adjudicate 0x06a4aa93...1428b](https://explorer-studio.genlayer.com/tx/0x06a4aa93fa64840f03e1c1e3909fe548470cdda0107cdbf1ba830cc101b1428b), [close 0x98bdc90c...ed9a9](https://explorer-studio.genlayer.com/tx/0x98bdc90c565084c5a1596caa1d4ee5da0990a222242580439bd28dd6bc9ed9a9) | Digest 1056b1e70b43162a6d153eb0d83b033c0d10bbefbac421b24ad5260f41529cad; leader NO_VIOLATION; post 3 VISIBLE; case CLOSED; no restriction |
+| Case 2 and appeal | [post 4 0x6304c968...e6729e](https://explorer-studio.genlayer.com/tx/0x6304c96848c075f8d00bee2d9686a6e792fa82853a062fe843a28643e5e6729e), [open 0xb5b79fde...1fea2](https://explorer-studio.genlayer.com/tx/0xb5b79fded0c2c65b039556ab0f04e85c72452a4e87b9f81faca13c112ab1fea2), [defense 0x237b6aa3...9ba41c](https://explorer-studio.genlayer.com/tx/0x237b6aa3e64a2f1b8c803b249277707894c26c7d59176b51927ede3eb99ba41c), [freeze 0x23484f82...8d0c7f](https://explorer-studio.genlayer.com/tx/0x23484f821b9dbc96b7fffc0369939a5009c87a46813e4fe4d23f66171f8d0c7f), [adjudicate 0x4b52ead8...417cc](https://explorer-studio.genlayer.com/tx/0x4b52ead876fb17c341aa7423b7c41246e25439645d56d4723b6f07aaa13417cc), [appeal 0x58c2152b...69db1](https://explorer-studio.genlayer.com/tx/0x58c2152b719e178b9b17bb0880c900758c11a5401771cb36a8a4e51d46469db1), [response 0x58482e79...f67853](https://explorer-studio.genlayer.com/tx/0x58482e79f49ec28b755d844aa88c9b56d0709ec235c55c9efe9c09111f67853e), [freeze appeal 0x5f74c442...3eeed9](https://explorer-studio.genlayer.com/tx/0x5f74c442f7da53a5497ee68643760c825a43ed26b5be9e119d6dcf62b3deeed9), [adjudicate appeal 0x93fa5ac8...d691e55](https://explorer-studio.genlayer.com/tx/0x93fa5ac8a5c9f013184b6ebc3281feac498cff530db9bd7417e67e219d691e55) | Initial digest 98e76ac57dd352cd6d752a7f4fd476e9474b66ade99e68d16d3c9507584cf78d; appeal digest aec48fd46e37892159414ba87d93585581931e818d4157b279f07b92f83541b8; initial and appellate finding MINOR_BREACH; post remains HIDDEN; case CLOSED; no restriction |
+
+### Final readback
+
+Final views on the corrected contract returned get_counts = communities 2, rooms 2, posts 4, cases 2. Community 1 is Builders Collective ACTIVE with four members and charter versions 1–2. Community 2 is Research Forum ACTIVE with three members and charter version 1. Room 1 is a rejected expired proposal; room 2 is ACTIVE with policy versions 1–2 and no featured post. Posts 1–4 are stable, post 2 replies to post 1, post 3 remains visible after NO_VIOLATION, and post 4 remains hidden after the upheld MINOR_BREACH appeal.
+
+### Observable semantic-consensus evidence
+
+Case 1 finalized with result MAJORITY_AGREE and leader SUCCESS. The leader classification was NO_VIOLATION under clause CITATION with an exact anchor from the frozen post; validator metadata was IDLE, AGREE, AGREE, IDLE, AGREE. Case 2 finalized with MINOR_BREACH under CITATION; the anchor was an exact excerpt from the challenged post and metadata was AGREE, AGREE, IDLE, IDLE, AGREE. The appeal independently finalized with MINOR_BREACH, metadata AGREE, AGREE, AGREE, IDLE, IDLE. StudioNet exposes validator status/vote metadata and structured leader output, not every validator's private prompt or reasoning; no private trace is claimed. Direct Mode remains the controlled proof for malformed output, prompt injection, forged/irrelevant anchors and disagreement rejection.
+
+### Negative live controls
+
+| Control | Transaction | Observed result |
+| --- | --- | --- |
+| Late vote on expired room 1 | [0xf6968aa7...75034b](https://explorer-studio.genlayer.com/tx/0xf6968aa7a5c73ae3e568945319e39cacc96f1da5f2094abd6f01878f7475034b) | FINALIZED receipt with leader rollback vote expired; room state unchanged |
+| Outsider publication | [0x3bfddf3a...eb487a](https://explorer-studio.genlayer.com/tx/0x3bfddf3aa465844bd7195543c608f1d4bea04e2553ce8411ee8ccf67e2eb487a) | FINALIZED receipt with execution rollback room membership required; post count remained 4 |
+| Duplicate challenge of post 4 | [0x75922063...f99332](https://explorer-studio.genlayer.com/tx/0x75922063f16e4bd1c096394cfe9a09c49766cf690bcbda132264f83f5cf99332) | FINALIZED receipt with rollback post has already been challenged; case count and post unchanged |
+
+The earlier browser-wallet registration in this file was performed against the superseded contract and is not presented as evidence for the corrected address. It does prove the production EIP-1193 path can request and finalize a real user signature without importing a CLI key; the fresh corrected-contract lifecycle above was signed by six distinct CLI identities.
+
+## Historical pre-hardening deployment and browser check (superseded)
+
+This section is a superseded pre-hardening deployment record retained for historical comparison. It is not evidence for the final product address; use the current final section above.
 
 ### Deployment provenance
 
