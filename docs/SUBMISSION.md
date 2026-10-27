@@ -44,6 +44,10 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
 * CI baseline: [GitHub Actions run 40476952743](https://github.com/ometere123/crossrule/actions/runs/40476952743)
 
+## Production UI evidence
+
+The public Accord Chamber was verified against `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. Each viewport had no horizontal overflow, page errors or console errors. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative; live counts and records below it come from the deployed contract.
+
 ## Reviewer walkthrough
 
 1. Open the Accord Chamber landing page and inspect the contract-backed counts, community directory, room directory, policy versions and public case views without a wallet.

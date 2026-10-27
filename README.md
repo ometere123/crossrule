@@ -35,6 +35,8 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 
 The live StudioNet readback after the demonstration lifecycle is communities `2`, rooms `2`, posts `4`, cases `2`. Room 1 is a deliberately failed initial proposal (`REJECTED`); room 2 is active with policy versions 1 and 2. The current public casebook contains one `NO_VIOLATION` decision and one closed, independently reassessed `MINOR_BREACH` appeal.
 
+The production Accord Chamber was checked at 1440, 1280, 1024, 768, 390 and 375 CSS pixels with no horizontal overflow, no page errors and no console errors. Representative captures: [desktop hero](docs/screenshots/accord-hero-1440.png), [mobile hero](docs/screenshots/accord-hero-390.png), and [full desktop page](docs/screenshots/accord-1440.png).
+
 The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22.
 
 ## Product in one story
