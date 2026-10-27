@@ -40,14 +40,14 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
 * Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xf9bF16af4253064E349fF0fCfc7472f75c63110e)
 * Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951)
-* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app); the existing URL was inspected, but corrected-contract redeployment is pending Vercel team-scope approval
+* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after [READY Vercel deployment `dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ), uploaded from Git commit `601f221dc172f9e8aa7b061252386330c9539be9`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Latest full CI before this documentation-only closeout: [run 40557912992](https://github.com/ometere123/crossrule/actions/runs/40557912992), successful 9/9 jobs at `9850375f042cf9da292d10e9e50f0f0de3509a76`
+* Latest full CI: [run 40560229019](https://github.com/ometere123/crossrule/actions/runs/40560229019), successful 9/9 jobs at `601f221dc172f9e8aa7b061252386330c9539be9`
 
 ## Production UI evidence
 
-The public Accord Chamber interface was inspected at `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. The committed frontend passed the desktop/mobile Playwright suite and has no known application console errors; the current public URL still serves the prior deployment, so its live counters are not treated as evidence for the corrected contract. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative.
+The public Accord Chamber interface was inspected at `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. The READY production alias now reads the corrected contract and displayed 2 communities, 1 room, 4 cases and 6 posts, with the real community directory and public casebook populated. The committed frontend passed the desktop/mobile Playwright suite. The browser verification profile emitted wallet-extension provider errors, but no user-visible application error; local and CI browser suites had no application console errors. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative.
 
 ## Reviewer walkthrough
 

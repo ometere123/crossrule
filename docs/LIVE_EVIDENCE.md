@@ -21,8 +21,8 @@ This section is the current closeout record. The older ledger below is retained 
 | Contract source | 44,575 LF bytes; SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e` |
 | Deployed source | 44,575 decoded bytes; SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e` |
 | Exact parity | `byteEqual: true`, checked by `scripts/verify_deployed_source.mjs` using `gen_getContractCode` |
-| Latest full GitHub CI before this documentation-only closeout | [run 40557912992](https://github.com/ometere123/crossrule/actions/runs/40557912992), `success`, 9/9 jobs, exact SHA `9850375f042cf9da292d10e9e50f0f0de3509a76` |
-| Production frontend | [`https://crossrule.vercel.app`](https://crossrule.vercel.app); corrected-contract redeployment pending Vercel team-scope approval |
+| Latest full GitHub CI | [run 40560229019](https://github.com/ometere123/crossrule/actions/runs/40560229019), `success`, 9/9 jobs, exact SHA `601f221dc172f9e8aa7b061252386330c9539be9` |
+| Production frontend | [`https://crossrule.vercel.app`](https://crossrule.vercel.app), [READY Vercel deployment `dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ), uploaded from exact frontend checkout at Git commit `601f221dc172f9e8aa7b061252386330c9539be9`; verified HTTP 200 and live counts 2/1/4/6 |
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; all three list views returned `[]` |
 
 The historical deployment used CRLF bytes and is retained below for provenance. The current repository enforces LF for `contracts/Crossrule.py` through `.gitattributes`; deployment source retrieval is now an exact-byte check, not normalized-text comparison.

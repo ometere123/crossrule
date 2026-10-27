@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the hardened source is pushed to `main`, the single corrected contract is deployed to StudioNet, and the six-wallet social lifecycle has been executed with six distinct CLI identities. The live record contains two active communities, one active bilateral room with three preserved policy versions, six stable post IDs, four semantic cases, a finalized application appeal and finalized negative permission controls. The final GitHub CI run is green. The existing Vercel URL still serves the prior production build until team-scope approval permits redeploying the corrected contract address; that hosting limitation is reported explicitly rather than conflated with the verified contract evidence. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
+**Current release status:** the hardened source is pushed to `main`, the single corrected contract is deployed to StudioNet, the six-wallet social lifecycle has been executed with six distinct CLI identities, and the corrected Accord Chamber frontend is live on Vercel. The live record contains two active communities, one active bilateral room with three preserved policy versions, six stable post IDs, four semantic cases, a finalized application appeal and finalized negative permission controls. The final GitHub CI run is green. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
 
 ## Exact stack
 
@@ -27,11 +27,11 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
-| Vercel deployment | Existing URL: [crossrule.vercel.app](https://crossrule.vercel.app); corrected-contract redeployment is pending Vercel team-scope approval |
+| Vercel deployment | [READY production deployment](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ) (`dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`), uploaded by CLI from Git commit `601f221dc172f9e8aa7b061252386330c9539be9` |
 | Contract | `0xf9bF16af4253064E349fF0fCfc7472f75c63110e` |
 | Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xf9bF16af4253064E349fF0fCfc7472f75c63110e) |
 | Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951) |
-| Latest full GitHub CI before this documentation-only closeout | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40557912992) at `9850375f042cf9da292d10e9e50f0f0de3509a76` |
+| Latest full GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40560229019) at `601f221dc172f9e8aa7b061252386330c9539be9` |
 | Source | SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e`, commit `cf96ee8e88ef83d2b5ffc8cbbe9f24b389943dea` |
 | Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; five validator vote slots were exposed and deployed source matched the committed LF bytes exactly (44,575 bytes) |
 
@@ -39,7 +39,7 @@ The live StudioNet readback after the fresh demonstration lifecycle is communiti
 
 The production Accord Chamber was checked at 1440, 1280, 1024, 768, 390 and 375 CSS pixels with no horizontal overflow, no page errors and no console errors. Representative captures: [desktop hero](docs/screenshots/accord-hero-1440.png), [mobile hero](docs/screenshots/accord-hero-390.png), and [full desktop page](docs/screenshots/accord-1440.png).
 
-The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22.
+The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22. The READY production deployment above was verified at the public alias and read the corrected contract state: 2 communities, 1 room, 4 cases and 6 posts.
 
 ## Product in one story
 
