@@ -22,7 +22,7 @@ This section is the current closeout record. The older ledger below is retained 
 | Deployed source | 44,575 decoded bytes; SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e` |
 | Exact parity | `byteEqual: true`, checked by `scripts/verify_deployed_source.mjs` using `gen_getContractCode` |
 | Latest full GitHub CI | [run 40560229019](https://github.com/ometere123/crossrule/actions/runs/40560229019), `success`, 9/9 jobs, exact SHA `601f221dc172f9e8aa7b061252386330c9539be9` |
-| Production frontend | [`https://crossrule.vercel.app`](https://crossrule.vercel.app), [READY Vercel deployment `dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ), uploaded from exact frontend checkout at Git commit `601f221dc172f9e8aa7b061252386330c9539be9`; verified HTTP 200 and live counts 2/1/4/6 |
+| Production frontend | [`https://crossrule.vercel.app`](https://crossrule.vercel.app), [READY Vercel deployment `dpl_C48PNMuVsaCa1pdeEHS2SVmvU6gJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/C48PNMuVsaCa1pdeEHS2SVmvU6gJ), uploaded from exact frontend checkout at Git commit `601f221dc172f9e8aa7b061252386330c9539be9`; verified HTTP 200, production Playwright `10 passed` across desktop/mobile and live counts 2/1/4/6 |
 | Production browser wallet | The final Chrome profile exposed no `window.ethereum` provider. No CLI key was imported into the browser and no browser-wallet write is claimed; injected-wallet behavior remains covered by the provider test doubles and the public production read path was verified. |
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; all three list views returned `[]` |
 

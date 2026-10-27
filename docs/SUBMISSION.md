@@ -47,7 +47,7 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 
 ## Production UI evidence
 
-The public Accord Chamber interface was inspected at `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. The READY production alias now reads the corrected contract and displayed 2 communities, 1 room, 4 cases and 6 posts, with the real community directory and public casebook populated. The committed frontend passed the desktop/mobile Playwright suite. The browser verification profile emitted wallet-extension provider errors, but no user-visible application error; local and CI browser suites had no application console errors. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative.
+The public Accord Chamber interface was inspected at `https://crossrule.vercel.app` at 1440, 1280, 1024, 768, 390 and 375 CSS pixels. The READY production alias now reads the corrected contract and displayed 2 communities, 1 room, 4 cases and 6 posts, with the real community directory and public casebook populated. The Playwright suite passed `10` tests against the production alias across desktop and mobile, and the same `10`-test suite passed locally. The browser verification profile emitted wallet-extension provider errors, but no user-visible application error; local and CI browser suites had no application console errors. Representative captures are [desktop hero](screenshots/accord-hero-1440.png), [mobile hero](screenshots/accord-hero-390.png) and [full desktop page](screenshots/accord-1440.png). The diagram is explicitly illustrative.
 
 ## Reviewer walkthrough
 
