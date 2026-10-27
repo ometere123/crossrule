@@ -13,6 +13,9 @@ FINDINGS = ("NO_VIOLATION", "INSUFFICIENT_EVIDENCE", "MINOR_BREACH", "SERIOUS_BR
 MAX_MEMBERS = 12
 MAX_HISTORY = 64
 MAX_PENDING_ROOM_PROPOSALS = 32
+MAX_CURRENT_PARTNERS = 64
+MAX_PAIR_RESERVATIONS = 32
+MAX_ACTIVE_RESTRICTIONS = 32
 MAX_PAGE_SIZE = 20
 
 
@@ -33,7 +36,9 @@ def valid_finding(result, clause_id, post_text):
     anchor, reason = result["anchor"], result["reason"]
     if not isinstance(anchor, str) or not isinstance(reason, str):
         return False
-    if not (8 <= len(anchor.encode("utf-8")) <= 180 and 12 <= len(reason.encode("utf-8")) <= 500):
+    if (not anchor.strip() or
+            not (1 <= len(anchor.encode("utf-8")) <= 180) or
+            not (12 <= len(reason.encode("utf-8")) <= 500)):
         return False
     # The anchor is a provenance witness, not an approximate paraphrase.  It
     # must be an exact substring of the frozen post bytes.  The validator also
@@ -64,7 +69,7 @@ substring that merely happens to occur. If the evidence does not support a
 breach, use NO_VIOLATION or INSUFFICIENT_EVIDENCE and still cite a relevant
 passage. Return ONLY a JSON object with four keys:
 {"finding":"NO_VIOLATION|INSUFFICIENT_EVIDENCE|MINOR_BREACH|SERIOUS_BREACH",
-"clause_id":"exact cited ID","anchor":"8-180 byte exact excerpt of post",
+"clause_id":"exact cited ID","anchor":"1-180 byte exact excerpt of post",
 "reason":"12-500 byte explanation"}.
     """ + stage + "\nCASE_JSON=" + evidence
     if proposal is not None:
@@ -121,6 +126,7 @@ class Crossrule(gl.Contract):
     posts: TreeMap[u32, str]
     cases: TreeMap[u32, str]
     restrictions: TreeMap[str, str]
+    restriction_until_index: TreeMap[str, str]
     room_post_index: TreeMap[str, str]
     community_partner_index: TreeMap[str, str]
     pair_reservation_counts: TreeMap[str, str]
@@ -206,6 +212,7 @@ class Crossrule(gl.Contract):
     def _add_partner(self, cid, partner):
         partners = self._partners(cid)
         if int(partner) not in partners:
+            self._require(len(partners) < MAX_CURRENT_PARTNERS, "partner index capacity reached")
             partners.append(int(partner))
             self._save_partners(cid, partners)
 
@@ -233,6 +240,13 @@ class Crossrule(gl.Contract):
         """
         pair = self._pair_key(a, b)
         current = int(self.pair_reservation_counts.get(pair, "0"))
+        self._require(current < MAX_PAIR_RESERVATIONS, "pair reservation capacity reached")
+        if current == 0:
+            partners_a, partners_b = self._partners(a), self._partners(b)
+            self._require(int(b) in partners_a or len(partners_a) < MAX_CURRENT_PARTNERS,
+                          "partner index capacity reached")
+            self._require(int(a) in partners_b or len(partners_b) < MAX_CURRENT_PARTNERS,
+                          "partner index capacity reached")
         self.pair_reservation_counts[pair] = str(current + 1)
         if current == 0:
             self._add_partner(a, b)
@@ -243,24 +257,39 @@ class Crossrule(gl.Contract):
             self._increment_conflict(wallet, a)
 
     def _release_pair(self, a, b, ra, rb):
+        # Release against current rosters, not the vote snapshot. A member can
+        # be admitted while a reservation is pending and must lose exactly one
+        # reservation contribution when that reservation terminates.
         pair = self._pair_key(a, b)
         current = int(self.pair_reservation_counts.get(pair, "0"))
         self._require(current > 0, "conflict reservation missing")
+        current_a = list(self._community(u32(a))["members"])
+        current_b = list(self._community(u32(b))["members"])
+        for wallet in current_a:
+            self._require(int(self.wallet_conflict_index.get(self._conflict_key(wallet, b), "0")) > 0,
+                          "conflict index underflow")
+        for wallet in current_b:
+            self._require(int(self.wallet_conflict_index.get(self._conflict_key(wallet, a), "0")) > 0,
+                          "conflict index underflow")
         if current == 1:
             self.pair_reservation_counts[pair] = "0"
             self._remove_partner(a, b)
             self._remove_partner(b, a)
         else:
             self.pair_reservation_counts[pair] = str(current - 1)
-        for wallet in ra:
+        for wallet in current_a:
             self._decrement_conflict(wallet, b)
-        for wallet in rb:
+        for wallet in current_b:
             self._decrement_conflict(wallet, a)
 
     def _record_membership(self, cid, wallet):
         """Add the wallet to the bounded conflict index for this community."""
         for partner in self._partners(cid):
-            self._increment_conflict(wallet, partner)
+            reservations = int(self.pair_reservation_counts.get(self._pair_key(cid, partner), "0"))
+            if reservations:
+                key = self._conflict_key(wallet, partner)
+                current = int(self.wallet_conflict_index.get(key, "0"))
+                self.wallet_conflict_index[key] = str(current + reservations)
 
     def _clear_pending(self, room):
         if not room.get("pending_counted"):
@@ -308,6 +337,33 @@ class Crossrule(gl.Contract):
     def _approved(self, record):
         return (len(record["yes_a"]) >= self._threshold(record["voters_a"]) and
                 len(record["yes_b"]) >= self._threshold(record["voters_b"]))
+
+    def _settle_agreement(self, room):
+        """Apply one terminal transition for an initial vote or amendment.
+
+        Explicit finalization and permissionless expiry share this transition.
+        An approved ballot therefore cannot become a rejection merely because
+        an expiry call wins the transaction ordering race.
+        """
+        vote = room["vote"]
+        passed = self._approved(vote)
+        if passed:
+            self._require(room["version"] < MAX_HISTORY, "policy history cap reached")
+            room["version"] += 1
+            room["policies"].append({"version": room["version"], "policy": vote["data"],
+                                     "ratified_at": self._now()})
+            room["status"] = "ACTIVE"
+            if room["version"] == 1:
+                # Ratification no longer consumes a bounded pending slot, but
+                # the pair reservation remains authoritative for isolation.
+                self._clear_pending(room)
+        elif room["version"] == 0:
+            room["status"] = "REJECTED"
+            if room.get("isolation_reserved"):
+                self._release_pair(room["a"], room["b"], vote["voters_a"], vote["voters_b"])
+                room["isolation_reserved"] = False
+            self._clear_pending(room)
+        room["vote"] = None
 
     def _clauses(self, source):
         if isinstance(source, str):
@@ -528,13 +584,7 @@ class Crossrule(gl.Contract):
         vote = room.get("vote")
         self._require(vote is not None and self._now() > vote["due"],
                       "room proposal still active")
-        if room["version"] == 0:
-            room["status"] = "REJECTED"
-            if room.get("isolation_reserved"):
-                self._release_pair(room["a"], room["b"], vote["voters_a"], vote["voters_b"])
-                room["isolation_reserved"] = False
-            self._clear_pending(room)
-        room["vote"] = None
+        self._settle_agreement(room)
         self._save(self.rooms, rid, room)
 
     @gl.public.write
@@ -570,24 +620,7 @@ class Crossrule(gl.Contract):
         self._require(vote is not None, "no agreement proposal")
         passed = self._approved(vote)
         self._require(passed or self._now() > vote["due"], "agreement vote ongoing")
-        if passed:
-            self._require(room["version"] < MAX_HISTORY, "policy history cap reached")
-            room["version"] += 1
-            room["policies"].append({"version": room["version"], "policy": vote["data"],
-                                     "ratified_at": self._now()})
-            room["status"] = "ACTIVE"
-            if room["version"] == 1:
-                # The pair reservation remains authoritative for admission
-                # isolation, but the proposal no longer consumes the bounded
-                # pending-proposal slot once ratification is complete.
-                self._clear_pending(room)
-        elif room["version"] == 0:
-            room["status"] = "REJECTED"
-            if room.get("isolation_reserved"):
-                self._release_pair(room["a"], room["b"], vote["voters_a"], vote["voters_b"])
-                room["isolation_reserved"] = False
-            self._clear_pending(room)
-        room["vote"] = None
+        self._settle_agreement(room)
         self._save(self.rooms, rid, room)
 
     def _active_policy(self, room):
@@ -636,15 +669,10 @@ class Crossrule(gl.Contract):
         return f"{room_id}:{wallet}"
 
     def _restricted(self, room_id, wallet):
-        raw = self.restrictions.get(self._restriction_key(room_id, wallet), "")
-        if not raw:
-            return False
-        for restriction in json.loads(raw):
-            if restriction["until"] > self._now():
-                record = self._case(u32(restriction["case_id"]))
-                if record["finding"] == "SERIOUS_BREACH":
-                    return True
-        return False
+        # The current maximum expiry is a direct lookup. Historical case
+        # records remain immutable in `cases`, while posting eligibility does
+        # not scan that history or re-read every prior sanction.
+        return int(self.restriction_until_index.get(self._restriction_key(room_id, wallet), "0")) > self._now()
 
     @gl.public.write
     def publish_post(self, rid: u32, parent_id: u32, body: str) -> u32:
@@ -759,12 +787,22 @@ class Crossrule(gl.Contract):
         raw = self.restrictions.get(key, "")
         previous = json.loads(raw) if raw else []
         existing = next((r for r in previous if r["case_id"] == case["id"]), None)
-        previous = [r for r in previous if r["case_id"] != case["id"]]
+        self._require(isinstance(previous, list) and len(previous) <= MAX_ACTIVE_RESTRICTIONS,
+                      "restriction index corrupted")
+        previous = [r for r in previous
+                    if r["case_id"] != case["id"] and r["until"] > self._now()]
         if finding == "SERIOUS_BREACH":
-            previous.append({"case_id": case["id"],
-                             "until": existing["until"] if existing else
-                                      self._now() + case["policy"]["suspension_minutes"] * 60})
+            until = (existing["until"] if existing else
+                     self._now() + case["policy"]["suspension_minutes"] * 60)
+            if until > self._now():
+                self._require(len(previous) < MAX_ACTIVE_RESTRICTIONS or existing is not None,
+                              "active restriction capacity reached")
+                previous.append({"case_id": case["id"], "until": until})
         self.restrictions[key] = self._dump(previous)
+        maximum = 0
+        for item in previous:
+            maximum = max(maximum, int(item["until"]))
+        self.restriction_until_index[key] = str(maximum)
         self._save(self.posts, u32(case["post_id"]), post)
         self._save(self.rooms, u32(case["room_id"]), room)
 
@@ -862,8 +900,12 @@ class Crossrule(gl.Contract):
     @gl.public.view
     def get_restriction(self, rid: u32, wallet: str) -> str:
         addr = self._address(wallet)
+        now = self._now()
+        entries = [item for item in json.loads(
+            self.restrictions.get(self._restriction_key(int(rid), addr), "[]"))
+                   if item["until"] > now]
         return self._dump({"suspended": self._restricted(int(rid), addr),
-            "entries": json.loads(self.restrictions.get(self._restriction_key(int(rid), addr), "[]"))})
+            "entries": entries})
 
     @gl.public.view
     def list_communities(self, start: u32, count: u8) -> str:

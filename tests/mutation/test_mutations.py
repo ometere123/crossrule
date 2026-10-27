@@ -97,8 +97,20 @@ MUTATIONS = [
      "self._require(self._now() > consent[\"due\"], \"room proposal still active\")",
      "self._require(self._now() >= consent[\"due\"], \"room proposal still active\")"),
     ("pending_capacity_release", "test_successful_ratification_releases_pending_capacity",
-     "if room[\"version\"] == 1:\n                # The pair reservation remains authoritative for admission\n                # isolation, but the proposal no longer consumes the bounded\n                # pending-proposal slot once ratification is complete.\n                self._clear_pending(room)",
+     "if room[\"version\"] == 1:\n                # Ratification no longer consumes a bounded pending slot, but\n                # the pair reservation remains authoritative for isolation.\n                self._clear_pending(room)",
      "if False:\n                self._clear_pending(room)"),
+    ("reservation_current_roster_release", "test_releasing_reservation_removes_conflict_for_member_admitted_during_vote",
+     "current_a = list(self._community(u32(a))[\"members\"])\n        current_b = list(self._community(u32(b))[\"members\"])",
+     "current_a = list(ra)\n        current_b = list(rb)"),
+    ("reservation_count_on_admission", "test_multiple_reservations_release_one_contribution_at_a_time",
+     "self.wallet_conflict_index[key] = str(current + reservations)",
+     "self.wallet_conflict_index[key] = str(current + 1)"),
+    ("approved_expiry_terminal_transition", "test_approved_ballot_expiry_cannot_overturn_ratification",
+     "vote = room[\"vote\"]\n        passed = self._approved(vote)\n        if passed:",
+     "vote = room[\"vote\"]\n        passed = False\n        if passed:"),
+    ("short_anchor_floor", "test_short_posts_have_adjudicable_full_post_anchors",
+     "not (1 <= len(anchor.encode(\"utf-8\")) <= 180)",
+     "not (8 <= len(anchor.encode(\"utf-8\")) <= 180)"),
     ("post_continuation", "test_room_posts_continue_beyond_150_and_pages_are_bounded",
      "room[\"post_count\"] += 1",
      "room[\"post_count\"] += 0"),
@@ -140,4 +152,4 @@ class SecurityMutations(unittest.TestCase):
         survivors=[name for name,status,_ in results if status=="survived"]
         print("MUTATION_REPORT=" + json.dumps(results, sort_keys=True))
         self.assertFalse(survivors, f"dangerous mutations survived: {survivors}; results={results}")
-        self.assertEqual(len(results),27)
+        self.assertEqual(len(results),31)

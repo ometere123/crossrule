@@ -82,6 +82,65 @@ def test_bilateral_consent_and_public_post(direct_deploy, direct_vm, direct_acco
     assert parsed(contract.get_post(pid))["status"] == "VISIBLE"
 
 
+def test_approved_ballot_cannot_be_rejected_by_permissionless_expiry(direct_deploy, direct_vm, direct_accounts):
+    direct_vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    a, b = active_communities(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    rid = contract.propose_room(a, b, "Expiry race policy", CLAUSES, 2, 2, 2, 2)
+    direct_vm.sender = direct_accounts[3]
+    contract.consent_room(rid)
+    for idx in (0, 1, 3, 4):
+        direct_vm.sender = direct_accounts[idx]
+        contract.vote_agreement(rid, True)
+    direct_vm.warp("2026-10-26T12:03:00+00:00")
+    contract.expire_room_proposal(rid)
+    room = parsed(contract.get_room(rid))
+    assert room["status"] == "ACTIVE"
+    assert room["version"] == 1
+
+
+def test_member_admitted_during_pending_reservation_is_released_after_expiry(direct_deploy, direct_vm, direct_accounts):
+    direct_vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    a, b = active_communities(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    rid = contract.propose_room(a, b, "Reservation cleanup policy", CLAUSES, 2, 2, 2, 2)
+    direct_vm.sender = direct_accounts[3]
+    contract.consent_room(rid)
+    direct_vm.sender = direct_accounts[0]
+    contract.propose_member(a, wallet(direct_accounts[6]))
+    direct_vm.sender = direct_accounts[6]
+    contract.accept_membership(a)
+    for idx in (0, 1):
+        direct_vm.sender = direct_accounts[idx]
+        contract.vote_member(a, True)
+    contract.finalize_member(a)
+    direct_vm.warp("2026-10-26T12:03:00+00:00")
+    contract.expire_room_proposal(rid)
+    direct_vm.sender = direct_accounts[3]
+    contract.propose_member(b, wallet(direct_accounts[6]))
+    direct_vm.sender = direct_accounts[6]
+    contract.accept_membership(b)
+
+
+def test_short_post_can_reach_semantic_adjudication(direct_deploy, direct_vm, direct_accounts):
+    direct_vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    rid = ratified_room(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    pid = contract.publish_post(rid, 0, "x")
+    direct_vm.sender = direct_accounts[3]
+    cid = contract.open_case(pid, "PROMO", "A one-character post challenge", "[]")
+    direct_vm.warp("2026-10-26T12:03:00+00:00")
+    contract.freeze_case(cid)
+    decision = json.dumps({"finding": "NO_VIOLATION", "clause_id": "PROMO",
+        "anchor": "x", "reason": "The complete short post does not establish a breach."})
+    direct_vm.mock_llm(r"You interpret a JOINTLY RATIFIED", decision)
+    contract.adjudicate_case(cid)
+    assert parsed(contract.get_case(cid))["finding"] == "NO_VIOLATION"
+
+
 def test_posts_continue_past_150_with_bounded_direct_pages(direct_deploy, direct_vm, direct_accounts):
     contract = direct_deploy(CONTRACT)
     rid = ratified_room(contract, direct_vm, direct_accounts)

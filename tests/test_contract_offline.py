@@ -102,6 +102,7 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract = module.Crossrule()
         self.contract.communities, self.contract.rooms = FakeTreeMap(), FakeTreeMap()
         self.contract.posts, self.contract.cases, self.contract.restrictions = FakeTreeMap(), FakeTreeMap(), FakeTreeMap()
+        self.contract.restriction_until_index = FakeTreeMap()
         self.contract.room_post_index = FakeTreeMap()
         self.contract.community_partner_index = FakeTreeMap()
         self.contract.pair_reservation_counts = FakeTreeMap()
@@ -132,24 +133,24 @@ class CrossruleLifecycle(unittest.TestCase):
             self.contract.accept_foundership(cb)
         return ca,cb
 
-    def proposal(self):
+    def proposal(self, suspension=5):
         ca,cb=self.create_communities()
         self.actor(0)
-        rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',CLAUSES,5,5,5,5)
+        rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',CLAUSES,5,5,5,suspension)
         self.actor(3)
         self.contract.consent_room(rid)
         return ca,cb,rid
 
-    def room(self):
-        ca,cb,rid=self.proposal()
+    def room(self, suspension=5):
+        ca,cb,rid=self.proposal(suspension)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
         self.contract.finalize_agreement(rid)
         return rid
 
-    def frozen_case(self, clause='PROMO'):
-        rid=self.room()
+    def frozen_case(self, clause='PROMO', suspension=5):
+        rid=self.room(suspension)
         self.actor(0)
         pid=self.contract.publish_post(rid,0,POST)
         self.actor(3)
@@ -294,7 +295,7 @@ class CrossruleLifecycle(unittest.TestCase):
         self.assertEqual(self.record(self.contract.get_post(pid))['status'],'VISIBLE')
 
     def test_serious_breach_blocks_posting(self):
-        rid,pid,cid=self.frozen_case()
+        rid,pid,cid=self.frozen_case(suspension=10)
         self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
         self.contract.adjudicate_case(cid)
         self.assertEqual(self.record(self.contract.get_post(pid))['status'],'HIDDEN')
@@ -336,7 +337,7 @@ class CrossruleLifecycle(unittest.TestCase):
             self.contract.adjudicate_case(cid)
 
     def test_appeal_reversal_restores_post_and_restriction(self):
-        rid,pid,cid=self.frozen_case()
+        rid,pid,cid=self.frozen_case(suspension=10)
         self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
         self.contract.adjudicate_case(cid)
         self.actor(0)
@@ -610,9 +611,108 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract.freeze_appeal(cid)
         self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
         self.contract.adjudicate_appeal(cid)
-        after=self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'][0]['until']
-        self.assertEqual(first,after)
+        key=self.contract._restriction_key(rid,self.wallets[0])
+        # The original five-minute window has elapsed by the time the appeal
+        # response window closes. The stored current index must retain that
+        # original expiry rather than starting a new suspension clock.
+        self.assertLessEqual(int(self.contract.restriction_until_index[key]),first)
+        self.assertEqual(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'],[])
         self.assertEqual(self.record(self.contract.get_case(cid))['original_finding'],'SERIOUS_BREACH')
+
+    def test_releasing_reservation_removes_conflict_for_member_admitted_during_vote(self):
+        ca,cb,rid=self.proposal()
+        self.actor(0)
+        self.contract.propose_member(ca,self.wallets[6])
+        self.actor(6)
+        self.contract.accept_membership(ca)
+        for slot in (0,1):
+            self.actor(slot)
+            self.contract.vote_member(ca,True)
+        self.contract.finalize_member(ca)
+        self.assertTrue(self.contract._admission_conflicts_with_room(cb,self.wallets[6]))
+        self.clock=self.record(self.contract.get_room(rid))['vote']['due']+1
+        self.contract.expire_room_proposal(rid)
+        self.assertFalse(self.contract._admission_conflicts_with_room(cb,self.wallets[6]))
+        self.assertEqual(self.contract.wallet_conflict_index[self.contract._conflict_key(self.wallets[6],cb)],'0')
+
+    def test_multiple_reservations_release_one_contribution_at_a_time(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        first=self.contract.propose_room(ca,cb,'First room',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(first)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(first,True)
+        self.contract.finalize_agreement(first)
+        self.actor(0)
+        second=self.contract.propose_room(ca,cb,'Second room',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(second)
+        self.actor(0)
+        self.contract.propose_member(ca,self.wallets[6])
+        self.actor(6)
+        self.contract.accept_membership(ca)
+        for slot in (0,1):
+            self.actor(slot)
+            self.contract.vote_member(ca,True)
+        self.contract.finalize_member(ca)
+        key=self.contract._conflict_key(self.wallets[6],cb)
+        self.assertEqual(self.contract.wallet_conflict_index[key],'2')
+        self.clock=self.record(self.contract.get_room(second))['vote']['due']+1
+        self.contract.expire_room_proposal(second)
+        self.assertEqual(self.contract.wallet_conflict_index[key],'1')
+        self.assertTrue(self.contract._admission_conflicts_with_room(cb,self.wallets[6]))
+
+    def test_approved_ballot_expiry_cannot_overturn_ratification(self):
+        _,_,rid=self.proposal()
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.clock=self.record(self.contract.get_room(rid))['vote']['due']+1
+        self.contract.expire_room_proposal(rid)
+        room=self.record(self.contract.get_room(rid))
+        self.assertEqual(room['status'],'ACTIVE')
+        self.assertEqual(room['version'],1)
+
+    def test_approved_amendment_expiry_cannot_overturn_version_two(self):
+        rid=self.room()
+        self.actor(0)
+        self.contract.propose_amendment(rid,'Second ratified policy',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(rid)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.clock=self.record(self.contract.get_room(rid))['vote']['due']+1
+        self.contract.expire_room_proposal(rid)
+        room=self.record(self.contract.get_room(rid))
+        self.assertEqual(room['status'],'ACTIVE')
+        self.assertEqual(room['version'],2)
+
+    def test_short_posts_have_adjudicable_full_post_anchors(self):
+        rid=self.room()
+        self.actor(0)
+        posts=[self.contract.publish_post(rid,0,body) for body in ('x','é','🙂','abcdefg')]
+        cases=[]
+        self.actor(3)
+        for pid,body in zip(posts,('x','é','🙂','abcdefg')):
+            cases.append(self.contract.open_case(pid,'PROMO','A short post challenge.','[]'))
+        self.clock=max(self.record(self.contract.get_case(cid))['defense_due'] for cid in cases)+1
+        for cid,body in zip(cases,('x','é','🙂','abcdefg')):
+            self.contract.freeze_case(cid)
+            self.mock(finding(anchor=body),finding(anchor=body))
+            self.contract.adjudicate_case(cid)
+            self.assertEqual(self.record(self.contract.get_case(cid))['finding'],'NO_VIOLATION')
+
+    def test_current_restriction_lookup_does_not_read_case_history(self):
+        rid,pid,cid=self.frozen_case()
+        self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_case(cid)
+        original_case=self.contract._case
+        self.contract._case=lambda number: (_ for _ in ()).throw(AssertionError('historical case scan'))
+        self.assertTrue(self.contract._restricted(rid,self.wallets[0]))
+        self.contract._case=original_case
 
     def test_wrong_wallet_cannot_accept_foundership_or_repeat_consent(self):
         self.actor(0)
