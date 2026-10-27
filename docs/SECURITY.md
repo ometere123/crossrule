@@ -65,8 +65,8 @@ These corrections are regression-tested by 46 offline tests, 18 genuine Direct M
 
 ## Current residual findings
 
-1. Six authorized independent StudioNet signers were not available in this session, so the live two-community lifecycle and live negative permission receipts remain unexecuted. The contract-level tests cover those invariants; the live gap is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).
-2. GenLayer receipts expose consensus records and vote hashes, but not necessarily private validator prompts or reasoning. No private validator trace is claimed.
-3. Public `TreeMap` JSON is intentionally permanent/public. There is no privacy or deletion guarantee.
-4. The root JavaScript development tree reports six advisories and the frontend development tree reports three Vitest/tinypool advisories. Production-only audits are clean. Fixing them requires a breaking Vitest 5/toolchain migration that was not silently introduced into the locked stack.
-5. `genlayer-test==0.29.2` has a known Windows temporary-file cleanup defect and a runner archive-name mismatch. CI uses a reproducible pinned-runner workaround; the Windows-only local shim is not part of the contract or production runtime.
+1. The six-wallet StudioNet lifecycle is now live-verified, including two communities, bilateral room governance, feature/unfeature, amendment history, two semantic cases, an application appeal and finalized negative permission controls. The live limitation is that the public receipts do not expose every validator's private prompt or reasoning; no private validator trace is claimed.
+2. Public TreeMap JSON is intentionally permanent/public. There is no privacy or deletion guarantee.
+3. The root JavaScript development tree reports six advisories and the frontend development tree reports three dev-only Vitest/tinypool advisories. Production-only audits are clean. Fixing them requires a breaking test-toolchain migration that was not silently introduced into the locked stack.
+4. genlayer-test==0.29.2 has a known Windows temporary-file cleanup defect and a runner archive-name mismatch. CI uses a reproducible pinned-runner workaround; the Windows-only local shim is not part of the contract or production runtime.
+5. The live demonstration used short two-minute defense/appeal windows. These are application deadlines and are not protocol finality controls; a production community should choose windows with network latency headroom.

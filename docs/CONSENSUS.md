@@ -40,3 +40,9 @@ Direct Mode tests can deterministically inject valid, malformed, adversarial and
 ## Failure behavior
 
 Evidence remains immutable and the case remains recoverable when semantic consensus fails. A caller must reach the next legitimate state and retry only through the published lifecycle; there is no owner, force-finalize method, centralized adjudicator, or backend fallback.
+
+## StudioNet observations from the completed lifecycle
+
+The deployed contract has now completed two real semantic case assessments and one real application appeal. Case 1 finalized with leader finding NO_VIOLATION under policy version 1; the receipt exposed validator metadata AGREE, DISAGREE, AGREE, AGREE, IDLE, and the post remained visible with no restriction. Case 2 finalized with leader finding MINOR_BREACH under PROMO-02; validator metadata was AGREE, DISAGREE, DISAGREE, AGREE, AGREE, and the post became hidden. Its application appeal froze a second digest and independently finalized with MINOR_BREACH; metadata was IDLE, AGREE, AGREE, AGREE, IDLE. The case closed while preserving original_finding and original_decision.
+
+The transaction receipts expose validator status/vote metadata and the leader equivalence output, but not every validator's private prompt or chain-local reasoning. This ledger therefore claims observable independent validator participation, not private validator transcripts. The controlled Direct Mode suite remains the proof of malformed output, false leader classification, prompt injection, provider failure and disagreement rejection.

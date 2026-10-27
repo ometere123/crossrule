@@ -2,6 +2,7 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowRight,ArrowLeft,BookOpen,CheckCircle2,Handshake,Plus,RefreshCw,Scale,ShieldCheck,Users} from 'lucide-react';
 import AppShell,{type Screen} from './AppShell';
+import LandingPage from './LandingPage';
 import {Empty,Field,Panel,SelectField,Status} from './Forms';
 import {connectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,transactionUrl,write,type TransactionObservation} from '@/lib/chain';
 import {EMPTY_COUNTS,formatTime,policyOf,sampleClauses,secondsLeft,threshold,truncate,type Case,type CaseListItem,type Community,type CommunityListItem,type Counts,type CrossrulePost,type Room,type RoomListItem} from '@/lib/types';
@@ -77,6 +78,7 @@ function txLabel(observation:TransactionObservation|undefined) {
 }
 
 export default function CrossruleApp(){
+  const [landing,setLanding]=useState(true);
   const [screen,setScreen]=useState<Screen>('overview');
   const [wallet,setWallet]=useState('');
   const [counts,setCounts]=useState<Counts>(EMPTY_COUNTS);
@@ -108,6 +110,7 @@ export default function CrossruleApp(){
   const value=(key:string)=>form[key]??'';
   const change=(key:string,val:string)=>setForm(prev=>({...prev,[key]:val}));
   const open=(next:Screen)=>{selectionRef.current+=1;setScreen(next);setError('');setNotice('');window.scrollTo({top:0,behavior:'smooth'});};
+  const enterApplication=(next:Extract<Screen,'overview'|'communities'|'create'|'rooms'|'cases'|'audit'>='overview')=>{setLanding(false);open(next);};
 
   const refresh=useCallback(async()=>{
     if(!isConfigured)return;
@@ -337,7 +340,10 @@ export default function CrossruleApp(){
   const appealEligible=Boolean(caseFile&&caseFile.status==='DECIDED'&&!caseFile.appeal&&walletKey&&((['MINOR_BREACH','SERIOUS_BREACH'] as string[]).includes(caseFile.finding)?caseFile.author.toLowerCase()===walletKey:caseFile.reporter.toLowerCase()===walletKey));
   const responseEligible=Boolean(caseFile?.status==='APPEAL_OPEN'&&caseFile.appeal&&walletKey&&((caseFile.appeal.appellant.toLowerCase()===caseFile.author.toLowerCase()?caseFile.reporter:caseFile.author).toLowerCase()===walletKey)&&!caseFile.appeal.response_submitted);
 
-  return <AppShell screen={screen} navigate={open} wallet={wallet} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))}>
+  if(landing)return <LandingPage counts={counts} communities={communities} rooms={rooms} cases={cases} loading={loading} wallet={wallet}
+    error={error} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))} onEnter={enterApplication}/>;
+
+  return <AppShell screen={screen} navigate={open} wallet={wallet} onConnect={()=>void connectWallet().then(setWallet).catch(e=>setError(String(e)))} onHome={()=>{setLanding(true);window.scrollTo({top:0,behavior:'smooth'});}}>
     {loading&&<div className="small muted row"><RefreshCw size={14}/> Refreshing finalized chain state…</div>}
     {error&&<div role="alert" className="notice error" style={{marginBottom:16}}>{error}</div>}
     {notice&&<div role="status" className="notice" style={{marginBottom:16}}>{notice}</div>}

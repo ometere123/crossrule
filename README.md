@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the hardened source is pushed to `main`, the single contract is deployed to StudioNet, and the frontend has a READY Vercel production deployment. The complete six-wallet social lifecycle is intentionally **not** claimed: only the authorized disposable deployment wallet was available for signing. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for the exact deployment receipt, source parity and initial readback.
+**Current release status:** the hardened source is pushed to `main`, the single contract is deployed to StudioNet, the six-wallet social lifecycle has been executed with six distinct CLI identities, and the Accord Chamber frontend is deployed to Vercel. The live record contains two active communities, a failed initial room proposal, one active bilateral room with two policy versions, four posts, a no-breach case, an appealed minor-breach case and finalized negative permission controls. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
 
 ## Exact stack
 
@@ -26,12 +26,14 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 
 | Item | Value |
 | --- | --- |
-| Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) |
+| Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
 | Contract | `0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12` |
 | Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12) |
 | Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xc46b0b7e3e83482eb2c0b4dec2951d81dd8ba5724a14b7f1a4d7810527006f9c) |
 | Source | SHA-256 `94577d12e28208f33de8365f3cd40c23476617ed234c61a4eedf3ca07221c8ff`, commit `acb7e7adfef59166fd602636ab9ffb377e570840` |
 | Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded returned contract source matches local bytes exactly |
+
+The live StudioNet readback after the demonstration lifecycle is communities `2`, rooms `2`, posts `4`, cases `2`. Room 1 is a deliberately failed initial proposal (`REJECTED`); room 2 is active with policy versions 1 and 2. The current public casebook contains one `NO_VIOLATION` decision and one closed, independently reassessed `MINOR_BREACH` appeal.
 
 The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22.
 
@@ -94,7 +96,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-**Direct Mode / linter artifact note:** the pinned toolchain has a runner archive-name/cache mismatch on some installations. The reproducible CI workaround downloads the exact `v0.2.16` artifact through `gltest.direct.sdk_loader`, places the pinned `py-lib-genlayer-std` runner under a temporary `GENVMROOT`, and then runs genuine `genvm-lint check` and Direct Mode. On Windows, `genlayer-test==0.29.2` also needs a session-only `os.unlink` shim for its open temporary file; CI runs on Linux without that local Windows workaround. Direct Mode is never replaced by a Python mock.
+**Direct Mode / linter artifact note:** the pinned toolchain has a runner archive-name/cache mismatch on some installations. The reproducible CI workaround downloads the exact `v0.2.16` artifact through `gltest.direct.sdk_loader`, places the pinned `py-lib-genlayer-std` runner under a temporary `GENVMROOT`, and then runs genuine `genvm-lint check` and Direct Mode. On Windows, `genlayer-test==0.29.2` also needs a session-only `os.unlink` shim for its open temporary file; CI runs on Linux without that local Windows workaround. Direct Mode is never replaced by a Python mock. During the live CLI session, the repository-pinned `genlayer@0.39.1` argument parser auto-coerced `0x...` strings to typed addresses even though these contract parameters are `str`; two finalized error receipts reproduce the issue. The same pinned `genlayer-js@1.1.8` signing client was then used with plain strings. The contract and frontend source are unchanged.
 
 ## Time safety
 

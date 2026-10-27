@@ -4,9 +4,9 @@ The numbers **5/5/5/5 are a target for Portal review**, not a self-awarded score
 
 ## Current observed results
 
-The verified Windows workspace run reports: Python offline `46 passed`; genuine GenVM Direct Mode `18 passed`; purposeful mutation suite `18/18 killed`; GenVM linter `3 checks passed`, `Crossrule` validated with 36 methods (10 views, 26 writes); frontend ESLint pass; TypeScript pass; Vitest `11 passed` across 3 files; Next production build pass; local desktop/mobile Playwright `10 passed`; production-only npm audits clean. The root full audit reports six dev-only advisories and the frontend full audit reports three dev-only Vitest/tinypool advisories. The final GitHub Actions result is linked from the closeout report and must be checked against the final repository SHA.
+The verified workspace run reports: Python offline `46 passed`; genuine GenVM Direct Mode `18 passed`; purposeful mutation suite `18/18 killed`; GenVM linter `3 checks passed`, `Crossrule` validated with 36 methods (10 views, 26 writes); frontend ESLint pass; TypeScript pass; Vitest `11 passed` across 3 files; Next production build pass; local desktop/mobile Playwright `10 passed`; production-only npm audits clean. The root full audit reports six dev-only advisories and the frontend full audit reports three dev-only Vitest/tinypool advisories. The completed live StudioNet lifecycle is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md), including two semantic adjudications, one application appeal and finalized negative controls. The final GitHub Actions result must be checked against the final repository SHA.
 
-The contract deployment and source parity evidence are recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Deployment initialization and public reads are live-verified; the six-wallet social lifecycle is not claimed until six genuinely distinct authorized signers are available.
+The contract deployment, source parity and completed six-wallet social lifecycle are recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Deployment initialization, public reads, semantic adjudications and the application appeal were live-verified; receipts and readbacks are the authority.
 
 ## Required build checks
 
@@ -85,3 +85,7 @@ Use **at least six consenting addresses**, three per community, and collect chai
 4. **Frontend 5/5:** attractive accessible responsive design, all operations exposed, honest wallet/network pending and success states, no hidden backend dependencies, complete histories and approachable end-to-end workflow.
 
 Final reviewer score is external and not inferable solely from these checks.
+
+## Completed live evidence
+
+The live run used six distinct StudioNet signers (A1/A2/A3 and B1/B2/B3), plus a fourth-member applicant and an outsider negative-control wallet. It verified founding consent, admission consent and threshold, charter history, a rejected initial room, bilateral room ratification, same-room discussion, feature and unfeature, a version-2 amendment with an open version-1 case, a no-breach semantic decision, a minor-breach semantic decision, an author appeal with opposing response and independent reassessment, and finalized unauthorized posting, invalid clause and late appeal failures. The exact transaction hashes and readbacks are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).

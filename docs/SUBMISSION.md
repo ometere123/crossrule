@@ -42,15 +42,26 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app) (the exact READY deployment ID is recorded in the engineering closeout report)
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
+* CI baseline: [GitHub Actions run 40476952743](https://github.com/ometere123/crossrule/actions/runs/40476952743)
 
 ## Reviewer walkthrough
 
-1. Open the frontend and inspect public counts, community directory, room directory, policy versions and public case views without a wallet.
+1. Open the Accord Chamber landing page and inspect the contract-backed counts, community directory, room directory, policy versions and public case views without a wallet.
 2. Read `contracts/Crossrule.py` and confirm there is exactly one contract and no owner/admin/upgrade path.
 3. Inspect the deployment receipt and source-parity record in `docs/LIVE_EVIDENCE.md`.
 4. In Direct Mode, run the adversarial tests for false classifications, invalid anchors, forged context, digest tampering, severity caps and appeals.
-5. If six authorized StudioNet signers are supplied, follow the complete live sequence in `docs/TEST_PLAN.md`; until then, treat the live multi-wallet rows as not run.
+5. Follow the completed six-wallet StudioNet sequence and exact readbacks in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). The page is a presentation layer; the explorer and contract views are the authority.
 
 ## Known limitations
 
-The deployed address has finalized initialization/read evidence, but this closeout does not claim a six-wallet live social lifecycle because only PRAEST was authorized. It also does not claim private validator prompts or reasoning when StudioNet receipts expose only aggregate votes/records. Text is public and persistent. The contract is bounded at 12 members, 150 posts, six clauses, three context posts, one challenge per post and one application appeal. The full JavaScript development audit still reports three dev-only Vitest/tinypool advisories; production dependencies audit cleanly. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
+The deployed address has finalized source parity and a completed six-wallet live social lifecycle. StudioNet receipts expose validator status/vote metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, 150 posts, six clauses, three context posts, one challenge per post and one application appeal. The full JavaScript development audit still reports three dev-only Vitest/tinypool advisories; production dependencies audit cleanly. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
+
+## Portal review framing
+
+**GenLayer Fit:** Two autonomous communities ratify a single room policy independently, and the subjective clause interpretation is checked by GenLayer leader/validator execution over frozen evidence. The social trust question is not reducible to a feed or a centralized AI call.
+
+**Intelligent Contract Quality:** The contract enforces caller identity, founder/applicant consent, side-separated voter snapshots, versioned policy history, authentic context, canonical digests, severity caps, room-and-wallet restrictions and one independent appeal.
+
+**Engineering Quality:** The repository retains pinned tooling, genuine Direct Mode, mutation tests, lint/build/browser gates, source-matched StudioNet deployment evidence and a live transaction/readback ledger that includes failures.
+
+**Frontend/UX:** The public first screen is the responsive Accord Chamber experience with an educational bilateral diagram, honest live counts, polished empty states and a clear route into the complete operational workspace. The workspace still exposes the full contract lifecycle and finality-aware transaction states.

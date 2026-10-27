@@ -2,13 +2,13 @@ import {test,expect} from '@playwright/test';
 
 test('public homepage, communities and founding form',async({page})=>{
   await page.goto('/');
-  await expect(page.getByText('Different communities.')).toBeVisible();
+  await expect(page.getByRole('heading',{name:/One shared space/})).toBeVisible();
+  await page.getByRole('button',{name:'Communities',exact:true}).click();
+  await expect(page.getByText('Independent governance')).toBeVisible();
   if(process.env.PLAYWRIGHT_BASE_URL){
     await expect(page.getByText(/Source build · not deployed/)).toHaveCount(0);
   }else await expect(page.getByText(/Source build · not deployed/)).toBeVisible();
-  await page.getByRole('button',{name:'Communities',exact:true}).click();
-  await expect(page.getByText('Independent governance')).toBeVisible();
-  await page.getByRole('button',{name:'Create community',exact:true}).first().click();
+  await page.getByRole('button',{name:'Create community',exact:true}).last().click();
   await expect(page.getByLabel('Initial charter')).toBeVisible();
   await page.getByLabel('Community name').fill('Builders Guild');
   await expect(page.getByLabel('Community name')).toHaveValue('Builders Guild');
@@ -16,7 +16,7 @@ test('public homepage, communities and founding form',async({page})=>{
 
 test('shared-room policy exposes all configurable timers',async({page})=>{
   await page.goto('/');
-  await page.getByRole('button',{name:'Shared rooms'}).click();
+  await page.getByRole('button',{name:'Shared rooms',exact:true}).click();
   await page.getByRole('button',{name:/New collaboration/}).click();
   await expect(page.getByLabel('Voting window')).toHaveValue('5');
   await expect(page.getByLabel('Author defense')).toHaveValue('5');
@@ -27,8 +27,8 @@ test('shared-room policy exposes all configurable timers',async({page})=>{
 test('missing injected wallet reports the required signer honestly',async({page})=>{
   await page.goto('/');
   await page.getByRole('button',{name:'Connect wallet'}).click();
-  await expect(page.locator('.notice.error')).toContainText('injected EIP-1193 browser wallet is required');
-  await page.getByRole('button',{name:'Create a community'}).click();
+  await expect(page.locator('.landing-alert')).toContainText('injected EIP-1193 browser wallet is required');
+  await page.getByRole('button',{name:'Create a community'}).first().click();
   await expect(page.getByRole('button',{name:'Register community'})).toBeDisabled();
 });
 
@@ -54,6 +54,6 @@ test('injected wallet connects and switches from the wrong network',async({page}
   await page.goto('/');
   await page.getByRole('button',{name:'Connect wallet'}).click();
   await expect(page.getByRole('button',{name:'Reconnect wallet'})).toContainText('0x1111');
-  await page.getByRole('button',{name:'Create a community'}).click();
+  await page.getByRole('button',{name:'Create a community'}).first().click();
   await expect(page.getByRole('button',{name:'Register community'})).toBeVisible();
 });

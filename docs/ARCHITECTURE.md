@@ -137,6 +137,8 @@ All four joint-policy inputs appear in the **frontend** and can be shortened for
 
 The web app connects to `https://studio.genlayer.com/api` and GenLayer's StudioNet chain 61999. Public screens use finalized contract view reads. Write buttons request wallet connection/network switch and transaction signature from the user, submit zero native-value calls, and surface the transaction hash and finalized state, not an invented success. The contract address is provided at build time through `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS`; the app distinguishes unconfigured source preview from deployment.
 
+The public first screen is the Accord Chamber landing page. Its bilateral SVG diagram is explicitly illustrative and labeled as not live chain state; the public counts, communities, rooms and cases beneath it are read from the deployed contract. Entering the application exposes the full operational workspace, including governance forms, policy archives, case files, appeal controls and transaction history. This separation keeps the product story distinct from the write-oriented dashboard without adding a second authority or data store.
+
 The browser has no private-key imports, mnemonic field, secret-bearing server routes, privileged API keys, backend proxy, or database. Public on-chain data is intentionally public; do not paste private material into evidence or defense fields.
 
 ## Contract method map
@@ -151,6 +153,10 @@ The browser has no private-key imports, mnemonic field, secret-bearing server ro
 | Cases | `open_case`, `submit_defense`, `freeze_case`, `adjudicate_case`, `close_case` | `get_case`, `list_cases` |
 | Appeals | `open_appeal`, `submit_appeal_response`, `freeze_appeal`, `adjudicate_appeal` | `get_case` |
 | Restrictions and counts | — | `get_restriction`, `get_counts` |
+
+## Deployed record used for review
+
+The source-matched StudioNet deployment at `0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12` now reads two communities, two rooms, four posts and two cases. Room 2 has two preserved policy versions; case 1 is a version-1 no-breach decision and case 2 is a closed version-2 appealed minor breach. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for the transaction-level provenance.
 
 The deployed source was validated by the genuine GenVM linter as 36 methods: 10 views and 26 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
 

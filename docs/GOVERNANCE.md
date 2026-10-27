@@ -35,3 +35,7 @@ The author may submit one bounded defense before the case deadline. After the st
 One application-level appeal is available within the frozen appeal window. The adverse party is the author for a breach finding and the reporter for `NO_VIOLATION` or `INSUFFICIENT_EVIDENCE`. The other party may submit one response before the response deadline. Appeal evidence is frozen and hashed separately. GenLayer reassesses the frozen rule and facts rather than blindly copying the original result. The original finding and decision remain preserved; the current finding and post/restriction state reflect the final application outcome.
 
 Application appeals are distinct from GenLayer protocol-level finality or transaction appeals. Neither is controlled by the frontend timer settings.
+
+## Live demonstration record
+
+The StudioNet demonstration used Builders Collective (community 1) and Research Forum (community 2), with three independent founders per group. Community 1 admitted a fourth wallet only after applicant consent and two approvals from its frozen four-wallet roster. Its charter history contains two versions. Room 1 demonstrates a failed initial proposal; room 2 was ratified by three approvals from community 1 and two from community 2, then amended bilaterally to version 2. A case opened before that amendment retains policy version 1, while a later case uses version 2. The exact transaction links, reads and negative receipts are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).
