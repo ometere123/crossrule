@@ -1,0 +1,153 @@
+# CROSSRULE — Architecture and state model
+
+## Trust boundaries
+
+```mermaid
+flowchart TD
+  U[Public reader or six-plus distinct signer wallets] --> WEB[Responsive Next.js app on Vercel]
+  WEB -->|Read-only RPC| RPC[GenLayer StudioNet RPC 61999]
+  WEB -->|Injected EIP-1193 signing| WALLET[User's wallet]
+  WALLET -->|Signed zero-value write| RPC
+  RPC --> IC[Single Crossrule Python Intelligent Contract]
+  IC --> STORE[TreeMap public source-of-truth storage]
+  IC -->|Frozen case evidence| EP[GenLayer leader + independent validators]
+  EP -->|Classification agreement required| IC
+```
+
+Everything outside `Crossrule.py` is a presentation or transport layer. No service holds a privileged key, adjudicates cases, starts timers, or can change authoritative outcomes. Case and policy data are inspectable using public contract view methods. The browser's local transaction history is **convenience only**, never a source of authority.
+
+## Roles
+
+| Actor | Key permissions / limits |
+| --- | --- |
+| Anonymous visitor | Browse communities, rooms, public posts, cases, agreement versions, source status; cannot write |
+| Founder | Propose a community; invited founders must independently consent before activation |
+| Community member | Vote on admissions and charter amendments; propose and vote on cross-community agreements; join room discussions |
+| Other member in room | Cite a clause and challenge a visible/under-review eligible post once |
+| Challenged author | File one defense before cutoff; if adversely ruled against, file one appeal |
+| Reporter | File a challenge; when a case rejects the complaint, appeal that decision once; respond to the author's appeal |
+| Any transaction submitter | Finalize sufficiently approved/expired votes; freeze an expired defense, adjudicate a frozen case, close an unappealed case |
+| GenLayer validators | Independently re-evaluate frozen evidence; veto classification disagreement |
+
+The contract has no administrator. No wallet has elevated authority over either group's decisions.
+
+## Complete product sequence
+
+```mermaid
+sequenceDiagram
+  participant A as Community A wallets
+  participant B as Community B wallets
+  participant D as CROSSRULE app
+  participant C as GenLayer contract
+  participant V as Leader + validators
+  A->>D: Create community with 3 consenting founders
+  D->>C: Signed founding and acceptance calls
+  B->>D: Create separate community
+  D->>C: Signed founding and acceptance calls
+  A->>C: Propose joint text, clauses, configurable windows
+  A->>C: Two-thirds A vote
+  B->>C: Two-thirds B vote
+  C-->>D: Active immutable policy version
+  A->>C: Publish post or reply
+  B->>C: Challenge cited clause and bounded context
+  A->>C: Submit defense by deadline
+  A->>C: Freeze after deadline, then request adjudication
+  C->>V: Frozen evidence JSON and sha256 digest
+  V-->>C: Independently matched classification
+  C-->>D: Visible, hidden or suspended status
+  A->>C: One application appeal with grounds
+  B->>C: Optional appeal response by deadline
+  A->>C: Freeze, adjudicate and close appeal
+  C-->>D: Final app ruling and public audit trail
+```
+
+## Storage model
+
+The one contract stores ordered JSON records inside GenLayer `TreeMap` primitives. No external indexer is authoritative.
+
+| Store | Key / fields | Core invariants |
+| --- | --- | --- |
+| `communities` | Monotonic ID; name, description, founders, consents, members, versioned charters, active votes | 3 consenting founders, 12-member cap, two-thirds charter/admission threshold, 1 active vote per type |
+| `rooms` | Monotonic ID; two community IDs, votes, status, agreement policy snapshots, version, post IDs, feature vote | Distinct community IDs; disjoint member rosters; separate two-thirds threshold each side |
+| `posts` | Monotonic ID; room, author, parent, body, status, case ID | Author is a current room member; replies remain within a room; hidden means hidden from app feed, not erased |
+| `cases` | Monotonic ID; frozen clause, agreement version, context, author, reporter, defense, decision, appeal | One challenge per post; immutable evidence inputs hashed before LLM call; one app appeal |
+| `restrictions` | `${roomId}:${lowercaseWallet}` with case IDs and expiry timestamps | Case-scoped suspension only on allowed serious breaches; reversal removes its own entry; upheld appeal preserves original expiry |
+
+### Community state
+
+```mermaid
+stateDiagram-v2
+  [*] --> FOUNDING: Propose three founders
+  FOUNDING --> ACTIVE: All 3 independently accept
+  ACTIVE --> ACTIVE: 2/3 admission or charter vote
+```
+
+Founding is explicitly opt-in. An unaccepted founder remains a pending invitation, never a member. The initial founder set is fixed; there is no community-level admin or privileged removal. Community admission is separately consented to by the invitee and ratified by two-thirds of the current roster snapshot. Votes do not double count and expire at their immutable deadlines.
+
+### Room governance state
+
+```mermaid
+stateDiagram-v2
+  [*] --> RATIFYING: Propose joint policy
+  RATIFYING --> ACTIVE: 2/3 A plus 2/3 B
+  RATIFYING --> REJECTED: Deadline without both approvals
+  ACTIVE --> ACTIVE: Bilateral amendment creates next version
+  ACTIVE --> ACTIVE: Bilateral feature vote
+```
+
+An active room may have a pending amendment while ordinary posts and cases continue under the active policy. Amendments affect **newly opened cases**; a case retains the frozen agreement and sanctions from the version that existed when it was filed. Earlier policies remain in `policies` for audit.
+
+### Case state and effects
+
+```mermaid
+stateDiagram-v2
+  [*] --> OPEN: Other member files clause-based challenge
+  OPEN --> FROZEN: Defense deadline expires; hash evidence
+  FROZEN --> DECIDED: GenLayer semantic ruling
+  DECIDED --> CLOSED: Appeal deadline passes
+  DECIDED --> APPEAL_OPEN: Adverse party files one appeal
+  APPEAL_OPEN --> APPEAL_FROZEN: Response deadline expires
+  APPEAL_FROZEN --> CLOSED: Reassessment and final app ruling
+```
+
+Case decisions classify evidence, not human identity. The only accepted outputs are four enumerated findings. They must cite the challenged clause ID, contain an extract from the specific frozen post (8–180 bytes), and include a bounded reason. The validator re-runs semantic assessment independently; mismatched classifications fail, rather than quietly registering an unreliable ruling. Both `original_decision` and `original_finding` remain stored after an appeal; the current `decision` and `finding` reflect its later result, and the appeal's own decision is retained as well.
+
+- `NO_VIOLATION`: post `VISIBLE` or `RESTORED`; no suspension.
+- `INSUFFICIENT_EVIDENCE`: post `VISIBLE` or `RESTORED`; no suspension.
+- `MINOR_BREACH`: post `HIDDEN`; no suspension.
+- `SERIOUS_BREACH`: only if the ratified clause has `max_severity=SERIOUS`; post `HIDDEN` and case-scoped temporary room posting suspension.
+
+The system does **not** delete the on-chain text. The application does not conceal a public, challenged post's provenance from contract readers.
+
+## All configured time windows
+
+| What expires | Who sets it | When frozen | Range |
+| --- | --- | --- | --- |
+| Community admission / charter vote | Founder in community setup | Community creation | 2–10,080 minutes |
+| Joint agreement and amendment votes | Room proposer | Each proposal | 2–10,080 minutes |
+| Featured-post vote | Inherits ratified joint vote time | Feature proposal | 2–10,080 minutes |
+| Case defense | Joint policy proposer, both groups ratify | Case opening, policy snapshot | 2–10,080 minutes |
+| Eligibility to open one case appeal | Joint policy proposer, both groups ratify | Initial case decision | 2–10,080 minutes |
+| Appeal response | Ratified defense duration | Appeal creation | 2–10,080 minutes |
+| Serious-posting sanction | Joint policy proposer, both groups ratify | First serious ruling | 2–10,080 minutes |
+
+All four joint-policy inputs appear in the **frontend** and can be shortened for demos; they are not globally hardcoded. **No UI setting controls GenLayer network consensus or protocol finality**, and on-chain timestamps continue even if a wallet or browser goes offline. Advancing an eligible case stage requires a normal wallet-submitted transaction; there is deliberately no keeper.
+
+## RPC and UI behavior
+
+The web app connects to `https://studio.genlayer.com/api` and GenLayer's StudioNet chain 61999. Public screens use finalized contract view reads. Write buttons request wallet connection/network switch and transaction signature from the user, submit zero native-value calls, and surface the transaction hash and finalized state, not an invented success. The contract address is provided at build time through `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS`; the app distinguishes unconfigured source preview from deployment.
+
+The browser has no private-key imports, mnemonic field, secret-bearing server routes, privileged API keys, backend proxy, or database. Public on-chain data is intentionally public; do not paste private material into evidence or defense fields.
+
+## Design tradeoffs already decided
+
+- Fixed two-community bilateral agreements, not N-way governance.
+- One contract, no proxy or upgrade path.
+- Permissionless finalization calls rather than an automatic cron agent.
+- Text-only public posts with bounded length and bounded room size/storage.
+- Auditable immutable rule/case snapshots rather than mutable moderation policy links.
+- Two-stage original ruling plus one app appeal, not unlimited appeals.
+- Versioned community charters and joint policy amendments in this complete scope.
+- No tokens, fund custody, sybil resistance assertions, or real-world identity verification.
+
+These are explicit complete-product boundaries; do not quietly reclassify them as deferred mandatory features.

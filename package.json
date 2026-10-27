@@ -1,0 +1,9 @@
+{
+  "name": "crossrule-toolchain",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pinned GenLayer CLI for CROSSRULE contract deployment and inspection",
+  "engines": {"node": "22.x"},
+  "scripts": {"genlayer": "genlayer"},
+  "devDependencies": {"genlayer": "0.39.1"}
+}
