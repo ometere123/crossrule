@@ -310,11 +310,18 @@ class Crossrule(gl.Contract):
                 len(record["yes_b"]) >= self._threshold(record["voters_b"]))
 
     def _clauses(self, source):
-        bounded(source, 3900, "clauses JSON")
-        try:
-            clauses = json.loads(source)
-        except Exception:
-            raise gl.vm.UserError("invalid clauses JSON")
+        if isinstance(source, str):
+            bounded(source, 3900, "clauses JSON")
+            try:
+                clauses = json.loads(source)
+            except Exception:
+                raise gl.vm.UserError("invalid clauses JSON")
+        else:
+            # The repository CLI decodes a JSON array argument as a native
+            # list before calldata encoding. Accept that transport form, while
+            # applying the same strict schema below; browser writes continue
+            # to use the canonical JSON string form.
+            clauses = source
         self._require(isinstance(clauses, list) and 1 <= len(clauses) <= 6, "1-6 clauses required")
         names = set()
         normalized = []
@@ -669,11 +676,14 @@ class Crossrule(gl.Contract):
         self._require(post["case_id"] == 0, "post has already been challenged")
         policy = self._active_policy(room)
         self._require(any(x["id"] == clause_id for x in policy["clauses"]), "unknown clause")
-        bounded(context_json, 120, "context JSON")
-        try:
-            refs = json.loads(context_json)
-        except Exception:
-            raise gl.vm.UserError("invalid context list")
+        if isinstance(context_json, str):
+            bounded(context_json, 120, "context JSON")
+            try:
+                refs = json.loads(context_json)
+            except Exception:
+                raise gl.vm.UserError("invalid context list")
+        else:
+            refs = context_json
         self._require(isinstance(refs, list) and len(refs) <= 3 and
                       all(type(ref) is int for ref in refs) and len(refs) == len(set(refs)),
                       "invalid context selection")

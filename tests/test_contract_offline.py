@@ -695,6 +695,7 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract.finalize_agreement(rid)
         policy=self.record(self.contract.get_room(rid))['policies'][0]['policy']
         self.assertEqual(policy['clauses'][0],{'id':'RULE','text':'A bounded rule.','max_severity':'MINOR'})
+        self.assertEqual(self.contract._clauses(json.loads(clauses))[0]['id'], 'RULE')
         self.actor(0)
         with self.assertRaisesRegex(UserError,'bad clause'):
             self.contract.propose_amendment(rid,'Bad',json.dumps([{'id':'X','text':'ok','max_severity':'MINOR','extra':1}]),5,5,5,5)
