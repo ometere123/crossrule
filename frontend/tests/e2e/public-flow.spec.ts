@@ -81,3 +81,21 @@ test('connected wallet rehydrates after refresh and exposes disconnect',async({p
   await page.getByRole('button',{name:'Disconnect'}).click();
   await expect(page.getByRole('button',{name:'Connect wallet'})).toBeVisible();
 });
+
+test('wallet rehydrates from eth_accounts without optional event hooks',async({page})=>{
+  await page.addInitScript(()=>{
+    const accounts=['0x'+'3'.repeat(40)];
+    window.ethereum={
+      request:async({method})=>{
+        if(method==='eth_accounts'||method==='eth_requestAccounts')return accounts;
+        if(method==='eth_chainId')return '0xf22f';
+        throw new Error('Unmocked EIP-1193 request: '+method);
+      }
+    };
+  });
+  await page.goto('/');
+  await page.getByRole('button',{name:'Connect wallet'}).click();
+  await expect(page.getByRole('button',{name:'Reconnect wallet'})).toContainText('0x3333');
+  await page.reload();
+  await expect(page.getByRole('button',{name:'Reconnect wallet'})).toContainText('0x3333');
+});

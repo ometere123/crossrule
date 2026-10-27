@@ -166,9 +166,10 @@ export default function CrossruleApp(){
   },[screen,form.communityA,form.communityB]);
   useEffect(()=>{
     const provider=window.ethereum;
-    if(!provider?.on)return;
+    if(!provider)return;
     let alive=true;
     void connectedWallet().then(next=>{if(alive&&next)setWallet(next);}).catch(()=>{ /* provider may not expose read-only accounts */ });
+    if(!provider.on)return()=>{alive=false;};
     const accountsChanged=(value:unknown)=>{
       const values=Array.isArray(value)?value:[];
       const next=Array.isArray(values)&&typeof values[0]==='string'?values[0].toLowerCase():'';
