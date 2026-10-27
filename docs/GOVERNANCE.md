@@ -6,7 +6,7 @@ Community creation records exactly three distinct wallet addresses. The sender i
 
 Later admission is a two-step consent process. An active member proposes one candidate, the candidate personally calls `accept_membership`, and the frozen current member roster votes. The required approvals are `ceil(2 * voters / 3)`. Each roster member may cast one approve or reject ballot. The 12-member cap is checked at proposal, consent, and finalization.
 
-Admission is also checked against every non-rejected bilateral room involving that community. A wallet already present in the opposing community cannot be admitted across that room boundary. This prevents a later roster change from creating two votes in one bilateral decision. A wallet that is pending in both communities is still checked again at each consent/finalization boundary.
+Admission uses an incremental conflict index rather than scanning historical rooms. The index records only active bilateral partner relationships and is updated atomically with membership and room reservation transitions. A wallet already present in the opposing community cannot be admitted across an active room boundary; unrelated communities and rejected/expired proposals do not increase admission work. The authoritative membership record and index are changed in one transaction, and the same conflict check is applied at every admission entry point.
 
 ## Charters
 
@@ -14,7 +14,7 @@ Charter proposals freeze the active member roster and community voting duration 
 
 ## Bilateral rooms
 
-A room always names two different active communities. Creation and every amendment copy both member rosters into separate `voters_a` and `voters_b` arrays. The contract rejects overlapping rosters and never computes a combined majority. A proposal activates only when both sides independently reach their own threshold:
+A room always names two different active communities. A proposal begins as `CONSENT_PENDING`; a member of the counterpart community must independently call `consent_room` before either side can ratify. Pair-key uniqueness and a bounded pending counter prevent one community from accumulating unlimited duplicate proposals. Expired proposals can be cleared permissionlessly through `expire_room_proposal`, which releases the pending accounting without changing an existing active room. Creation and every amendment then copy both member rosters into separate `voters_a` and `voters_b` arrays. The contract rejects overlapping rosters and never computes a combined majority. A proposal activates only when both sides independently reach their own threshold:
 
 ```text
 required(side) = ceil(2 × len(frozen_side_roster) / 3)
@@ -24,11 +24,11 @@ For 3, 4, 5, and 6 voters this is 2, 3, 4, and 4. Adding a member after proposal
 
 ## Features and discussion
 
-Posting requires current membership in either governing community, an active room, and no active serious restriction for that room/wallet pair. A room stores at most 150 post IDs. Post bodies and authors are immutable after publication. Replies must point to an earlier post in the same room. Feature and unfeature proposals use the same two independent frozen rosters; a hidden or stale candidate cannot become the active featured post.
+Posting requires current membership in either governing community, an active room, and no active serious restriction for that room/wallet pair. Posts use monotonic IDs plus a room-scoped ordinal index, so the original 150-post lifetime limit is removed. `list_posts` returns deterministic pages of at most 20 records; no read or write scans the full room history. Post bodies, authors, IDs and reply relationships are immutable after publication. Replies must point to an earlier post in the same room. Feature and unfeature proposals use the same two independent frozen rosters; a hidden or stale candidate cannot become the active featured post. If moderation later restores a post, its earlier featured status does not return automatically: a fresh bilateral feature vote is required.
 
 ## Cases and appeals
 
-An eligible other room member may challenge a post once. The author cannot self-report. The clause must exist in the active policy, context IDs are unique numeric IDs for earlier posts from the same room, and the contract copies context bodies and authors into the case. Filing changes the display state to `UNDER_REVIEW` but applies no sanction.
+An eligible other room member may challenge a post once. The author cannot self-report, and `post.case_id` makes this final even if the case is restored after appeal; a second challenger, clause, policy version or substituted context cannot bypass it. The clause must exist in the active policy, context IDs are unique numeric IDs for earlier posts from the same room, and the contract copies context bodies and authors into the case. Filing changes the display state to `UNDER_REVIEW` but applies no sanction.
 
 The author may submit one bounded defense before the case deadline. After the strict deadline boundary, any caller may freeze evidence; the freeze stores a canonical SHA-256 digest. Adjudication is possible only from the frozen state and re-verifies that digest.
 
@@ -38,4 +38,4 @@ Application appeals are distinct from GenLayer protocol-level finality or transa
 
 ## Live demonstration record
 
-The StudioNet demonstration used Builders Collective (community 1) and Research Forum (community 2), with three independent founders per group. Community 1 admitted a fourth wallet only after applicant consent and two approvals from its frozen four-wallet roster. Its charter history contains two versions. Room 1 demonstrates a failed initial proposal; room 2 was ratified by three approvals from community 1 and two from community 2, then amended bilaterally to version 2. A case opened before that amendment retains policy version 1, while a later case uses version 2. The exact transaction links, reads and negative receipts are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).
+The fresh StudioNet demonstration used Builders Collective (community 1) and Research Forum (community 2), with three independent founders per group. Community 1 admitted a fourth wallet after applicant consent and two approvals from its frozen three-wallet roster (the roster was three when the vote was created; the applicant became the fourth member only after finalization). Its charter history contains two versions. One active room was consented to by the counterpart and ratified independently, then amended bilaterally to versions 2 and 3. Case 1 opened under v1 before those amendments; cases 2–4 use later snapshots. Case 4 completed a reporter appeal with an independent appellate reassessment. Exact receipts, digests, readbacks and negative controls are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).

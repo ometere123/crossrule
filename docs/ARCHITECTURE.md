@@ -68,8 +68,8 @@ The one contract stores ordered JSON records inside GenLayer `TreeMap` primitive
 | Store | Key / fields | Core invariants |
 | --- | --- | --- |
 | `communities` | Monotonic ID; name, description, founders, consents, members, versioned charters, active votes | 3 consenting founders, 12-member cap, two-thirds charter/admission threshold, 1 active vote per type |
-| `rooms` | Monotonic ID; two community IDs, votes, status, agreement policy snapshots, version, post IDs, feature vote | Distinct community IDs; disjoint member rosters; separate two-thirds threshold each side |
-| `posts` | Monotonic ID; room, author, parent, body, status, case ID | Author is a current room member; replies remain within a room; hidden means hidden from app feed, not erased |
+| `rooms` | Monotonic ID; two community IDs, consent/votes, status, agreement policy snapshots, version, post count, feature vote | Distinct community IDs; disjoint member rosters; counterpart consent before ratification; separate two-thirds threshold each side |
+| `posts` + `room_post_index` | Monotonic global ID plus `${roomId}:${ordinal}` → post ID index | Author/parent remain stable; deterministic bounded pages; hidden means hidden from app feed, not erased; no lifetime room cap |
 | `cases` | Monotonic ID; frozen clause, agreement version, context, author, reporter, defense, decision, appeal | One challenge per post; immutable evidence inputs hashed before LLM call; one app appeal |
 | `restrictions` | `${roomId}:${lowercaseWallet}` with case IDs and expiry timestamps | Case-scoped suspension only on allowed serious breaches; reversal removes its own entry; upheld appeal preserves original expiry |
 
@@ -88,7 +88,9 @@ Founding is explicitly opt-in. An unaccepted founder remains a pending invitatio
 
 ```mermaid
 stateDiagram-v2
-  [*] --> RATIFYING: Propose joint policy
+  [*] --> CONSENT_PENDING: Propose joint policy
+  CONSENT_PENDING --> RATIFYING: Counterpart community consents
+  CONSENT_PENDING --> EXPIRED: Proposal expires or is permissionlessly cleared
   RATIFYING --> ACTIVE: 2/3 A plus 2/3 B
   RATIFYING --> REJECTED: Deadline without both approvals
   ACTIVE --> ACTIVE: Bilateral amendment creates next version
@@ -117,7 +119,15 @@ Case decisions classify evidence, not human identity. The only accepted outputs 
 - `MINOR_BREACH`: post `HIDDEN`; no suspension.
 - `SERIOUS_BREACH`: only if the ratified clause has `max_severity=SERIOUS`; post `HIDDEN` and case-scoped temporary room posting suspension.
 
-The system does **not** delete the on-chain text. The application does not conceal a public, challenged post's provenance from contract readers.
+The system does **not** delete the on-chain text. The application does not conceal a public, challenged post's provenance from contract readers. A post has one finality-bound challenge: after a case exists, even a restored post cannot be challenged again. Restoration restores visibility only; it never silently restores a previous featured endorsement. A fresh bilateral feature vote is required.
+
+### Bounded relationship and proposal indexes
+
+Admission does not scan historical rooms. The contract maintains a direct `wallet_conflict_index` keyed by lowercase wallet and community, plus `community_partner_index` and `pair_reservation_counts` for active bilateral relationships. On admission, only currently indexed active partners are checked, so unrelated communities and rejected room history do not increase the work of a member admission. Index updates occur in the same transaction as authoritative membership/room transitions; failed writes revert together with the index mutation.
+
+Room proposals are bounded by a pair key and a global pending counter. A proposer creates `CONSENT_PENDING`; only a member of the counterpart community can call `consent_room`. The two frozen rosters are then voted independently. Duplicate pending pairs, expired proposals and capacity overflow are rejected, while `expire_room_proposal` provides permissionless, state-validated cleanup. Existing active rooms and their reservations are not rewritten by a failed proposal.
+
+Posts use a monotonic global ID and a room-scoped ordinal index. `list_posts(room, offset, count)` accepts at most 20 records per read and never copies the full room history. This preserves post IDs, replies, evidence and featured references indefinitely within the contract's available storage while keeping each read and write bounded. Direct Mode covers the former 150-post boundary and pagination beyond it; the live demonstration verifies stable pages over six real posts.
 
 ## All configured time windows
 
@@ -147,18 +157,18 @@ The browser has no private-key imports, mnemonic field, secret-bearing server ro
 | --- | --- | --- |
 | Founding and membership | `create_community`, `accept_foundership`, `propose_member`, `accept_membership`, `vote_member`, `finalize_member` | `get_community`, `list_communities` |
 | Charter governance | `propose_charter`, `vote_charter`, `finalize_charter` | `get_community` |
-| Bilateral policy | `propose_room`, `propose_amendment`, `vote_agreement`, `finalize_agreement` | `get_room`, `list_rooms` |
+| Bilateral policy | `propose_room`, `consent_room`, `expire_room_proposal`, `propose_amendment`, `vote_agreement`, `finalize_agreement` | `get_room`, `list_rooms` |
 | Featured content | `propose_feature`, `vote_feature`, `finalize_feature` | `get_room`, `get_post` |
-| Discussion | `publish_post` | `get_post`, `list_posts` |
+| Discussion | `publish_post` | `get_post`, `list_posts` (bounded pages of at most 20) |
 | Cases | `open_case`, `submit_defense`, `freeze_case`, `adjudicate_case`, `close_case` | `get_case`, `list_cases` |
 | Appeals | `open_appeal`, `submit_appeal_response`, `freeze_appeal`, `adjudicate_appeal` | `get_case` |
 | Restrictions and counts | — | `get_restriction`, `get_counts` |
 
 ## Deployed record used for review
 
-The source-matched StudioNet deployment at `0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12` now reads two communities, two rooms, four posts and two cases. Room 2 has two preserved policy versions; case 1 is a version-1 no-breach decision and case 2 is a closed version-2 appealed minor breach. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for the transaction-level provenance.
+The source-matched StudioNet deployment at `0xf9bF16af4253064E349fF0fCfc7472f75c63110e` reads two active communities, one active room, six posts and four cases. The room preserves policy versions 1–3; case 1 was opened under version 1, while case 4 completed a distinct application appeal under version 3. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for the transaction-level provenance.
 
-The deployed source was validated by the genuine GenVM linter as 36 methods: 10 views and 26 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
+The deployed source was validated by the genuine GenVM linter as 38 methods: 10 views and 28 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
 
 ## Deployment provenance
 
@@ -169,7 +179,7 @@ The current StudioNet address and finalized deployment/readback ledger are in [`
 - Fixed two-community bilateral agreements, not N-way governance.
 - One contract, no proxy or upgrade path.
 - Permissionless finalization calls rather than an automatic cron agent.
-- Text-only public posts with bounded length and bounded room size/storage.
+- Text-only public posts with bounded length, bounded page reads and stable room-scoped storage indexes.
 - Auditable immutable rule/case snapshots rather than mutable moderation policy links.
 - Two-stage original ruling plus one app appeal, not unlimited appeals.
 - Versioned community charters and joint policy amendments in this complete scope.

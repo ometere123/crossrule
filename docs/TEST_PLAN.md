@@ -4,7 +4,7 @@ The numbers **5/5/5/5 are a target for Portal review**, not a self-awarded score
 
 ## Current observed results
 
-The verified workspace run reports: Python offline `46 passed`; genuine GenVM Direct Mode `18 passed`; purposeful mutation suite `18/18 killed`; GenVM linter `3 checks passed`, `Crossrule` validated with 36 methods (10 views, 26 writes); frontend ESLint pass; TypeScript pass; Vitest `11 passed` across 3 files; Next production build pass; local desktop/mobile Playwright `10 passed`; production-only npm audits clean. The production `https://crossrule.vercel.app` public-flow suite also passed `10/10` across desktop and mobile; a direct six-viewport check at 1440, 1280, 1024, 768, 390 and 375 CSS pixels found no horizontal overflow, page errors or console errors. The root full audit reports six dev-only advisories and the frontend full audit reports three dev-only Vitest/tinypool advisories. The completed live StudioNet lifecycle is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md), including two semantic adjudications, one application appeal and finalized negative controls. The final checked source SHA is `5338d57617cfca87c995c60d69fff8b3a6bda0dd`; its [GitHub Actions run 40505820516](https://github.com/ometere123/crossrule/actions/runs/40505820516) completed with all 9 jobs successful.
+The current hardening run reports: Python offline `55 passed`; genuine GenVM Direct Mode `19 passed`; purposeful mutation suite `27/27 killed`; GenVM linter `3 checks passed`, `Crossrule` validated with 38 methods (10 views, 28 writes); frontend ESLint pass; TypeScript pass; Vitest `11 passed` across 3 files; Next production build pass. The final local and production Playwright results and final GitHub Actions run are filled into this document after the last production deployment; they must be checked against the exact final commit, not an earlier baseline. The completed live StudioNet lifecycle is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md), including four semantic adjudications, one application appeal, six-post pagination and finalized negative controls. The final checked contract source SHA is `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e`.
 
 The contract deployment, source parity and completed six-wallet social lifecycle are recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Deployment initialization, public reads, semantic adjudications and the application appeal were live-verified; receipts and readbacks are the authority.
 
@@ -32,17 +32,22 @@ The contract deployment, source parity and completed six-wallet social lifecycle
 - Two thirds vote per community with independent denominators.
 - Duplicate ballot and outsider rejection.
 - Deadline expiration and failed proposal finalization.
+- Counterpart consent, duplicate pending-pair rejection, bounded pending capacity and permissionless proposal expiry.
+- Admission conflict-index behavior with unrelated historical rooms and rejected proposals.
 - Public post permissions and reply ownership.
+- Stable post IDs and bounded pages beyond the former 150-post boundary, including hidden records and empty cursors.
 - No immediate punishment from merely filing a challenge.
 - `NO_VIOLATION`, `INSUFFICIENT_EVIDENCE`, `MINOR_BREACH`, `SERIOUS_BREACH` outcomes.
 - Active serious sanction blocking publication.
 - Severity cap per frozen clause.
 - No fabricated excerpt or uncontrolled evidence source.
 - Leader/validator disagreement kills the verdict.
+- Materially irrelevant but genuine anchors, wrong policy versions and fabricated context are rejected; identical prose is not required.
 - Appeal grounds and optional respondent reply.
 - Appeal reversal restores post and removes its restriction.
 - Appeal upholding a serious finding does not extend earlier suspension.
 - Only adversely affected party may appeal; one application appeal.
+- Restored visibility does not silently restore a prior feature endorsement; a fresh bilateral feature vote is required.
 - Frozen evidence hash and original policy version unchanged by later amendments.
 - Malformed context IDs rejected before reading.
 - Proposal-supplied 2 to 10,080 minute bound, not a day-long hardcoded wait.

@@ -7,7 +7,7 @@
 3. **Opt-in membership.** All three founders consent; later applicants must accept their invitation and pass the community's threshold. Voting snapshots prevent late additions from changing a vote's denominator.
 4. **Explicit and stable policy.** A filed case freezes the active agreement version, cited clause, permitted severity, deadlines, allegations, post, context, and defense. Later amendments do not alter that case's original standards.
 5. **Evidence authenticity relative to chain state.** Reporter context IDs must be previous same-room post IDs and are copied from contract state. The model may not introduce off-chain evidence or new identities as facts.
-6. **Bounded model outputs.** Four exact findings; matching clause ID; bounded in-post quote and bounded reasoning; the independent validator repeats classification and rejects disagreement. Strict equivalence limits model-internal arbitrary outputs from silently becoming valid state transitions.
+6. **Material semantic support.** Four exact findings; matching clause ID; bounded anchor from the challenged post and bounded reasoning; validators independently inspect the frozen post, policy, defense, context and proposed anchor. They agree on the decision-bearing finding, clause and exact anchor, while natural-language reasoning may differ. A genuine substring, valid JSON object or plausible leader prose is not sufficient by itself.
 7. **Appeal isolation.** A single adverse party may appeal once. The case-specific restriction is removed if overturned; confirming a serious ruling does not extend an earlier suspension.
 8. **Public audit.** Hiding changes the official display status but cannot delete immutable on-chain text. Do not suggest privacy, erasure, or confidentiality.
 
@@ -19,7 +19,7 @@
 | Reporter fabricates an external context post | Context is a validated bounded list of earlier IDs; server/LLM sees contract-sourced text | Earlier real posts could themselves be misleading |
 | Single member forces policy or highlights own post | Frozen, side-separated two-thirds thresholds | Wallet voters can collude; one-person-one-wallet is not identity proof |
 | Case filed under a later changed rule | Freeze policy version and clause at report time; immutable case evidence digest | Two communities can agree to bad rules |
-| Validator accepts plausible prose with different judgment | Exact valid enumeration, source anchor, and classification-equivalence requirement | Matching wrong judgments across models remain possible |
+| Validator accepts a plausible but unsupported leader result | Deterministic identity/digest/severity checks plus independent validator assessment of clause applicability and material anchor relevance | Correlated model errors and subjective interpretation are not eliminated |
 | Author is punished under a minor-only clause | Serious finding rejected if clause does not authorize it | Severity classifications remain subjective |
 | Appeal keeps sanction alive forever | Upholding does not reset `until`; successful appeal removes case's restriction | Sanction may expire before an appeal transaction reaches finality |
 | Wallet replays or double votes | On-chain `yes/no` voter maps prevent multiple ballot submissions | Sybil wallets may join different communities, subject to membership process |
@@ -30,7 +30,7 @@
 
 ## Known operational limits
 
-- Exact contract limits: at most 12 wallets per community, 150 posts per room, 1–6 clauses per joint agreement, up to 3 older same-room context posts, one challenge per post, and one app appeal per case.
+- Exact contract limits: at most 12 wallets per community, 1–6 clauses per joint agreement, up to 3 older same-room context posts, one challenge per post, one app appeal per case, at most 20 records per public page, 64 retained policy/charter history entries and 32 pending room proposals globally. Posts have stable IDs and room-scoped pagination; there is no permanent 150-post lifetime cap.
 - All author, defense, context and allegation text is public **regardless of UI status**. Never post secrets, identifying information that requires protection, privileged documents, or private health information.
 - A wallet can create several communities with separate wallets; CROSSRULE is not a KYC or sybil-resistant identity system.
 - Default web RPC infrastructure is external and may be unavailable. The source app has no independently powered backend or fallback transaction writer.
@@ -52,20 +52,23 @@ Security claims in this source are engineering intent until corroborated by actu
 The audit found and corrected the following high-risk paths:
 
 * Founder and applicant consent is caller-bound and one-time; duplicate consent and wrong-wallet acceptance are rejected.
-* A wallet cannot be admitted into the opposing side of an existing or pending bilateral room; room rosters and all governance voter denominators are frozen.
+* A wallet cannot be admitted into the opposing side of an active bilateral room; an incremental conflict index makes this admission check independent of unrelated historical room count. Room rosters and all governance voter denominators are frozen.
+* Room proposals require counterpart-community consent, pair-key uniqueness, bounded pending capacity and permissionless expiry cleanup. Failed or expired proposals release their pending reservation without touching active rooms.
+* Post storage uses a monotonic global ID plus a room-scoped ordinal index. Bounded pages remain deterministic after hundreds of posts; evidence, replies and feature references keep their original IDs.
 * Clause objects are normalized and strict: one to six clauses, unique bounded IDs, bounded text, exact keys and explicit `MINOR`/`SERIOUS` severity.
 * Context is copied from earlier same-room on-chain posts; duplicate, future, cross-room and arbitrary-text references are rejected.
 * Evidence and appeal digests use canonical sorted-key UTF-8 JSON and are recomputed before each corresponding adjudication.
-* Validator assessment independently recomputes the decision-bearing finding and clause; valid JSON alone cannot authorize a sanction.
-* A hidden post cannot remain the active featured post, serious findings require serious-authorized clauses, and restrictions are keyed by both room and wallet.
+* Validator assessment independently recomputes the decision-bearing finding, clause and material anchor support; valid JSON or an irrelevant genuine substring cannot authorize a sanction.
+* A hidden post cannot remain the active featured post, restored visibility does not silently restore a previous feature endorsement, serious findings require serious-authorized clauses, and restrictions are keyed by both room and wallet.
+* One-challenge finality is explicit: a restored or appealed post cannot receive a second case through a different challenger, clause, policy version or evidence reference.
 * Appeal reversal removes only its own restriction; an upheld serious appeal preserves the original expiry instead of restarting it.
 * The frontend now validates bounded arguments, tracks account/network changes, prevents duplicate writes after unknown outcomes, and requires finalized successful execution before announcing success.
 
-These corrections are regression-tested by 46 offline tests, 18 genuine Direct Mode tests and 18/18 killed purposeful mutations. The results are implementation evidence, not an external security certification.
+These corrections are regression-tested by 55 offline tests, 19 genuine Direct Mode tests and 27/27 killed purposeful mutations. The results are implementation evidence, not an external security certification.
 
 ## Current residual findings
 
-1. The six-wallet StudioNet lifecycle is now live-verified, including two communities, bilateral room governance, feature/unfeature, amendment history, two semantic cases, an application appeal and finalized negative permission controls. The live limitation is that the public receipts do not expose every validator's private prompt or reasoning; no private validator trace is claimed.
+1. The fresh six-wallet StudioNet lifecycle is live-verified, including two communities, counterpart consent, bilateral room governance, feature/unfeature, policy versions 1–3, six posts, four semantic cases, a finalized application appeal and finalized negative permission controls. The live limitation is that public receipts expose validator vote/status metadata and structured leader output, not every validator's private prompt or reasoning; no private validator trace is claimed.
 2. Public TreeMap JSON is intentionally permanent/public. There is no privacy or deletion guarantee.
 3. The root JavaScript development tree reports six advisories and the frontend development tree reports three dev-only Vitest/tinypool advisories. Production-only audits are clean. Fixing them requires a breaking test-toolchain migration that was not silently introduced into the locked stack.
 4. genlayer-test==0.29.2 has a known Windows temporary-file cleanup defect and a runner archive-name mismatch. CI uses a reproducible pinned-runner workaround; the Windows-only local shim is not part of the contract or production runtime.

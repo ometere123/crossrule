@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the hardened source is pushed to `main`, the single contract is deployed to StudioNet, the six-wallet social lifecycle has been executed with six distinct CLI identities, and the Accord Chamber frontend is deployed to Vercel. The live record contains two active communities, a failed initial room proposal, one active bilateral room with two policy versions, four posts, a no-breach case, an appealed minor-breach case and finalized negative permission controls. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
+**Current release status:** the hardened source is pushed to `main`, the single corrected contract is deployed to StudioNet, the six-wallet social lifecycle has been executed with six distinct CLI identities, and the Accord Chamber frontend is being verified against that deployment. The live record contains two active communities, one active bilateral room with three preserved policy versions, six stable post IDs, four semantic cases, a finalized application appeal and finalized negative permission controls. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
 
 ## Exact stack
 
@@ -27,14 +27,14 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
-| Vercel deployment | `dpl_2xpb1NnyTmn5LZ9vwa5dLGaQ3qBg`, READY, source SHA `5338d57617cfca87c995c60d69fff8b3a6bda0dd` |
-| Contract | `0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12` |
-| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12) |
-| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xc46b0b7e3e83482eb2c0b4dec2951d81dd8ba5724a14b7f1a4d7810527006f9c) |
-| Source | SHA-256 `94577d12e28208f33de8365f3cd40c23476617ed234c61a4eedf3ca07221c8ff`, commit `acb7e7adfef59166fd602636ab9ffb377e570840` |
-| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded returned contract source matches local bytes exactly |
+| Vercel deployment | Final production deployment is recorded in [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) after the final frontend build |
+| Contract | `0xf9bF16af4253064E349fF0fCfc7472f75c63110e` |
+| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xf9bF16af4253064E349fF0fCfc7472f75c63110e) |
+| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xde0b737e7d4fb2b1540afaf060b4d80d43ae9687748908866fbd7f2300222951) |
+| Source | SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e`, commit `cf96ee8e88ef83d2b5ffc8cbbe9f24b389943dea` |
+| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; five validator vote slots were exposed and deployed source matched the committed LF bytes exactly (44,575 bytes) |
 
-The live StudioNet readback after the demonstration lifecycle is communities `2`, rooms `2`, posts `4`, cases `2`. Room 1 is a deliberately failed initial proposal (`REJECTED`); room 2 is active with policy versions 1 and 2. The current public casebook contains one `NO_VIOLATION` decision and one closed, independently reassessed `MINOR_BREACH` appeal.
+The live StudioNet readback after the fresh demonstration lifecycle is communities `2`, rooms `1`, posts `6`, cases `4`. The active room has policy versions 1, 2 and 3; case 1 was opened under v1 before the amendments and still retains that snapshot. The public casebook contains two `NO_VIOLATION` cases, one `MINOR_BREACH` case, one finalized application appeal and a finalized outsider-publication rollback.
 
 The production Accord Chamber was checked at 1440, 1280, 1024, 768, 390 and 375 CSS pixels with no horizontal overflow, no page errors and no console errors. Representative captures: [desktop hero](docs/screenshots/accord-hero-1440.png), [mobile hero](docs/screenshots/accord-hero-390.png), and [full desktop page](docs/screenshots/accord-1440.png).
 
@@ -111,7 +111,7 @@ Every proposal's own duration is adjustable in the web UI from **2 minutes to 7 
 - No Supabase, Cloudflare Worker, database, hidden LLM service, off-chain reputation or custodial funds.
 - No third community, AI autoposting, token rewards, stake/slash economics, hidden moderation content deletion, external social-platform integration, or infinite-scroll indexer.
 - Text content remains recoverable from public contract storage even if marked hidden in the official feed. Users must never post secrets or private data.
-- The application supports **one challenge and one appeal per post**. The contract enforces **12 members per community and 150 posts per room** to bound public on-chain storage. These are intentional present-scope constraints, not placeholders for a later V2.
+- The application supports **one challenge and one appeal per post**. The contract enforces **12 members per community**, six clauses per policy and bounded page reads of at most 20 records; posts use stable room-scoped indexes rather than a permanent lifetime cap. Historic post bodies and evidence remain public and immutable.
 - A future Portal milestone may introduce different functionality, but it is outside this complete initial submission.
 
 ## Documentation
