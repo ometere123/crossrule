@@ -21,7 +21,7 @@ This section is the current closeout record. The older ledger below is retained 
 | Contract source | 44,575 LF bytes; SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e` |
 | Deployed source | 44,575 decoded bytes; SHA-256 `58f998ff4b8401ecc623d9aa0a934d14352cf6a177f62c43d9c5ad53415b469e` |
 | Exact parity | `byteEqual: true`, checked by `scripts/verify_deployed_source.mjs` using `gen_getContractCode` |
-| Final GitHub CI | [run 40553650933](https://github.com/ometere123/crossrule/actions/runs/40553650933), `success`, 9/9 jobs, exact SHA `dbac5ccf7d3cfcad7cc59590e09e95eb62b613df` |
+| Latest full GitHub CI before this documentation-only closeout | [run 40557912992](https://github.com/ometere123/crossrule/actions/runs/40557912992), `success`, 9/9 jobs, exact SHA `9850375f042cf9da292d10e9e50f0f0de3509a76` |
 | Production frontend | [`https://crossrule.vercel.app`](https://crossrule.vercel.app); corrected-contract redeployment pending Vercel team-scope approval |
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; all three list views returned `[]` |
 
