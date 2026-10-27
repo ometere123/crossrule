@@ -139,6 +139,25 @@ The web app connects to `https://studio.genlayer.com/api` and GenLayer's StudioN
 
 The browser has no private-key imports, mnemonic field, secret-bearing server routes, privileged API keys, backend proxy, or database. Public on-chain data is intentionally public; do not paste private material into evidence or defense fields.
 
+## Contract method map
+
+| Area | Public write methods | Public view methods |
+| --- | --- | --- |
+| Founding and membership | `create_community`, `accept_foundership`, `propose_member`, `accept_membership`, `vote_member`, `finalize_member` | `get_community`, `list_communities` |
+| Charter governance | `propose_charter`, `vote_charter`, `finalize_charter` | `get_community` |
+| Bilateral policy | `propose_room`, `propose_amendment`, `vote_agreement`, `finalize_agreement` | `get_room`, `list_rooms` |
+| Featured content | `propose_feature`, `vote_feature`, `finalize_feature` | `get_room`, `get_post` |
+| Discussion | `publish_post` | `get_post`, `list_posts` |
+| Cases | `open_case`, `submit_defense`, `freeze_case`, `adjudicate_case`, `close_case` | `get_case`, `list_cases` |
+| Appeals | `open_appeal`, `submit_appeal_response`, `freeze_appeal`, `adjudicate_appeal` | `get_case` |
+| Restrictions and counts | — | `get_restriction`, `get_counts` |
+
+The deployed source was validated by the genuine GenVM linter as 36 methods: 10 views and 26 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
+
+## Deployment provenance
+
+The current StudioNet address and finalized deployment/readback ledger are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). The source parity check decodes the deployment transaction's returned `data.contract_code` and compares it byte-for-byte with the committed contract source. Vercel serves the client build from the `frontend` project root and injects only the public contract address.
+
 ## Design tradeoffs already decided
 
 - Fixed two-community bilateral agreements, not N-way governance.

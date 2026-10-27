@@ -46,3 +46,27 @@
 Perform negative sender tests for founding spoof, nonmember posts, vote duplication, cross-group wallet overlap, post reply cross-room, case context tampering, unrelated clause, invalid JSON, pre-deadline freeze, appeal wrong party, repeated appeal, fabricated source quotes, minor-clause serious penalty, validator classification disagreement, and sanctions after reversal. Capture finalized on-chain receipts for the live equivalents and retain offline/Direct regression tests in CI.
 
 Security claims in this source are engineering intent until corroborated by actual StudioNet deployment and independent review; this file is not a third-party audit.
+
+## Engineering audit corrections in this release
+
+The audit found and corrected the following high-risk paths:
+
+* Founder and applicant consent is caller-bound and one-time; duplicate consent and wrong-wallet acceptance are rejected.
+* A wallet cannot be admitted into the opposing side of an existing or pending bilateral room; room rosters and all governance voter denominators are frozen.
+* Clause objects are normalized and strict: one to six clauses, unique bounded IDs, bounded text, exact keys and explicit `MINOR`/`SERIOUS` severity.
+* Context is copied from earlier same-room on-chain posts; duplicate, future, cross-room and arbitrary-text references are rejected.
+* Evidence and appeal digests use canonical sorted-key UTF-8 JSON and are recomputed before each corresponding adjudication.
+* Validator assessment independently recomputes the decision-bearing finding and clause; valid JSON alone cannot authorize a sanction.
+* A hidden post cannot remain the active featured post, serious findings require serious-authorized clauses, and restrictions are keyed by both room and wallet.
+* Appeal reversal removes only its own restriction; an upheld serious appeal preserves the original expiry instead of restarting it.
+* The frontend now validates bounded arguments, tracks account/network changes, prevents duplicate writes after unknown outcomes, and requires finalized successful execution before announcing success.
+
+These corrections are regression-tested by 46 offline tests, 18 genuine Direct Mode tests and 18/18 killed purposeful mutations. The results are implementation evidence, not an external security certification.
+
+## Current residual findings
+
+1. Six authorized independent StudioNet signers were not available in this session, so the live two-community lifecycle and live negative permission receipts remain unexecuted. The contract-level tests cover those invariants; the live gap is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).
+2. GenLayer receipts expose consensus records and vote hashes, but not necessarily private validator prompts or reasoning. No private validator trace is claimed.
+3. Public `TreeMap` JSON is intentionally permanent/public. There is no privacy or deletion guarantee.
+4. The root JavaScript development tree reports six advisories and the frontend development tree reports three Vitest/tinypool advisories. Production-only audits are clean. Fixing them requires a breaking Vitest 5/toolchain migration that was not silently introduced into the locked stack.
+5. `genlayer-test==0.29.2` has a known Windows temporary-file cleanup defect and a runner archive-name mismatch. CI uses a reproducible pinned-runner workaround; the Windows-only local shim is not part of the contract or production runtime.

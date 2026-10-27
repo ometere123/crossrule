@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** source implementation and local automated test foundation. **No contract deployment, live finalist receipts, production URL, or Portal 5/5/5/5 review has been established by this repository.** Do not mistake successful mock/Direct Mode tests for live multi-validator finality. Source authorship and final deployment/review evidence are separate deliverables.
+**Current release status:** the hardened source is pushed to `main`, the single contract is deployed to StudioNet, and the frontend has a READY Vercel production deployment. The complete six-wallet social lifecycle is intentionally **not** claimed: only the authorized disposable deployment wallet was available for signing. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for the exact deployment receipt, source parity and initial readback.
 
 ## Exact stack
 
@@ -21,6 +21,19 @@ CROSSRULE is a complete, wallet-native social governance system where **two auto
 | Server / database / indexer / keeper | **None** |
 
 Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked StudioNet release. Validate that the target RPC and SDK combination still work before deployment.
+
+## Verified deployment
+
+| Item | Value |
+| --- | --- |
+| Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) |
+| Contract | `0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12` |
+| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12) |
+| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xc46b0b7e3e83482eb2c0b4dec2951d81dd8ba5724a14b7f1a4d7810527006f9c) |
+| Source | SHA-256 `94577d12e28208f33de8365f3cd40c23476617ed234c61a4eedf3ca07221c8ff`, commit `acb7e7adfef59166fd602636ab9ffb377e570840` |
+| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded returned contract source matches local bytes exactly |
+
+The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22.
 
 ## Product in one story
 
@@ -81,7 +94,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-**Direct Mode GenVM artifact note:** In `genlayer-test==0.29.2`, a first-run download may request an obsolete `genvm-universal.tar.xz` GitHub release name and fail with 404. Run `genvm-lint check` first, then share the verified linter tarball with the Direct Mode cache (implemented in the CI workflow); do not silently disable Direct Mode testing.
+**Direct Mode / linter artifact note:** the pinned toolchain has a runner archive-name/cache mismatch on some installations. The reproducible CI workaround downloads the exact `v0.2.16` artifact through `gltest.direct.sdk_loader`, places the pinned `py-lib-genlayer-std` runner under a temporary `GENVMROOT`, and then runs genuine `genvm-lint check` and Direct Mode. On Windows, `genlayer-test==0.29.2` also needs a session-only `os.unlink` shim for its open temporary file; CI runs on Linux without that local Windows workaround. Direct Mode is never replaced by a Python mock.
 
 ## Time safety
 
@@ -99,8 +112,12 @@ Every proposal's own duration is adjustable in the web UI from **2 minutes to 7 
 ## Documentation
 
 - [Architecture, actors, data and lifecycle](docs/ARCHITECTURE.md)
+- [Governance specification](docs/GOVERNANCE.md)
+- [Semantic consensus specification](docs/CONSENSUS.md)
 - [Threat model and explicit limits](docs/SECURITY.md)
 - [Testing and score evidence plan](docs/TEST_PLAN.md)
+- [Live evidence ledger](docs/LIVE_EVIDENCE.md)
+- [GenLayer Portal submission materials](docs/SUBMISSION.md)
 - [Deployment and reviewer closeout checklist](docs/HANDOFF.md)
 
 The 5/5/5/5 Portal rubric is a **target**, not a guaranteed score. Live finalized SUCCESS receipts, source parity, consensus observations and reviewer acceptance must be independently proven after deployment.

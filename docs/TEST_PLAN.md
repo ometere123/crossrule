@@ -2,6 +2,12 @@
 
 The numbers **5/5/5/5 are a target for Portal review**, not a self-awarded score. Automated tests prove specific implementation properties; the final deployment engineer must separately establish chain compatibility, completed lifecycle transactions, user-facing interactions, security evidence, and source parity.
 
+## Current observed results
+
+The verified Windows workspace run reports: Python offline `46 passed`; genuine GenVM Direct Mode `18 passed`; purposeful mutation suite `18/18 killed`; GenVM linter `3 checks passed`, `Crossrule` validated with 36 methods (10 views, 26 writes); frontend ESLint pass; TypeScript pass; Vitest `11 passed` across 3 files; Next production build pass; local desktop/mobile Playwright `10 passed`; production-only npm audits clean. The root full audit reports six dev-only advisories and the frontend full audit reports three dev-only Vitest/tinypool advisories. The final GitHub Actions result is linked from the closeout report and must be checked against the final repository SHA.
+
+The contract deployment and source parity evidence are recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Deployment initialization and public reads are live-verified; the six-wallet social lifecycle is not claimed until six genuinely distinct authorized signers are available.
+
 ## Required build checks
 
 | Layer | Command / deliverable | Criteria |
@@ -15,7 +21,7 @@ The numbers **5/5/5/5 are a target for Portal review**, not a self-awarded score
 | UI/domain tests | `cd frontend && npm test` | Green with mocked read-only RPC/wallet |
 | Production build | `cd frontend && npm run build` | Successful Next.js production build |
 | Browser tests | `cd frontend && npm run test:e2e` | Desktop and mobile Chrome paths, no console errors |
-| CI | `.github/workflows/ci.yml` | Linux/Windows matrices plus GenVM and Playwright green on GitHub |
+| CI | `.github/workflows/ci.yml` | Linux/Windows matrices plus GenVM, mutation, security and Playwright gates; verify the final run URL in the closeout report |
 
 `genlayer-test==0.29.2` may request a renamed GenVM archive; the CI runs `genvm-linter==0.11.0` first and shares its downloaded verified tarball. Do not remove the real Direct Mode job because of artifact download friction.
 

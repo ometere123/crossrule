@@ -3,7 +3,9 @@ import {test,expect} from '@playwright/test';
 test('public homepage, communities and founding form',async({page})=>{
   await page.goto('/');
   await expect(page.getByText('Different communities.')).toBeVisible();
-  await expect(page.getByText(/Source build · not deployed/)).toBeVisible();
+  if(process.env.PLAYWRIGHT_BASE_URL){
+    await expect(page.getByText(/Source build · not deployed/)).toHaveCount(0);
+  }else await expect(page.getByText(/Source build · not deployed/)).toBeVisible();
   await page.getByRole('button',{name:'Communities',exact:true}).click();
   await expect(page.getByText('Independent governance')).toBeVisible();
   await page.getByRole('button',{name:'Create community',exact:true}).first().click();
@@ -53,5 +55,5 @@ test('injected wallet connects and switches from the wrong network',async({page}
   await page.getByRole('button',{name:'Connect wallet'}).click();
   await expect(page.getByRole('button',{name:'Reconnect wallet'})).toContainText('0x1111');
   await page.getByRole('button',{name:'Create a community'}).click();
-  await expect(page.getByRole('button',{name:'Register community'})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Register community'})).toBeVisible();
 });

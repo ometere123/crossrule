@@ -1,0 +1,42 @@
+# CROSSRULE semantic consensus specification
+
+## Why GenLayer is necessary
+
+The contract can validate membership, IDs, deadlines, byte bounds, policy versions and evidence provenance deterministically. It cannot decide whether a human-written post semantically violates a jointly ratified clause. That subjective step is deliberately executed through GenLayer's nondeterministic leader/validator path. Removing that path would remove the trust boundary that distinguishes CROSSRULE from a CRUD feed with a centralized moderator.
+
+## Frozen input
+
+At `freeze_case`, the contract serializes a sorted-key, compact UTF-8 JSON object with `ensure_ascii=False` and separators `(',', ':')`. The initial digest covers:
+
+```text
+id, post_id, room_id, author, reporter, post_text, clause_id,
+policy_version, full policy, contract-derived context, allegation,
+defense, defense_submitted, opened_at, defense_due
+```
+
+Context bodies and authors are copied from on-chain posts before hashing. The full policy object is copied from the active version at case opening. Appeal evidence adds `appeal_due`, `original_finding`, `original_decision`, and the appeal snapshot containing appellant, grounds, response, response-submitted flag and response deadline. A static appeal instruction is included. Mutable processing fields such as status, digest and the new decision are intentionally excluded to avoid a circular self-hash.
+
+The digest is SHA-256 of the UTF-8 bytes of that exact canonical JSON string. Key order, Unicode bytes and whitespace therefore matter. `adjudicate_case` and `adjudicate_appeal` recompute and compare the digest before calling GenLayer.
+
+## Leader and validator responsibilities
+
+The leader receives only the frozen evidence and a prompt that defines the four accepted findings:
+
+* `NO_VIOLATION`
+* `INSUFFICIENT_EVIDENCE`
+* `MINOR_BREACH`
+* `SERIOUS_BREACH`
+
+It must return exactly `finding`, `clause_id`, `anchor`, and `reason`. The anchor is 8–180 UTF-8 bytes and must be an exact substring of the frozen challenged post. The reason is 12–500 UTF-8 bytes. The contract also checks the exact cited clause ID, finding enum, anchor provenance and severity cap; a serious result under a minor-only clause reverts.
+
+The validator does not accept a valid-looking leader JSON object as sufficient. It independently invokes the same substantive assessment over the same frozen evidence, validates its own output, and must agree on the decision-bearing `finding` and `clause_id`. Explanations need not be verbatim identical. Any malformed leader result, invalid anchor, independent classification mismatch, validator exception, provider error or post-consensus invalid result fails the write; the contract has no fallback ruling.
+
+For appeals, both leader and validator are explicitly instructed to treat the original decision as an untrusted prior claim and to reconsider the frozen rule, post, defense, grounds and response. The original decision remains in evidence for auditability, not as an automatic answer.
+
+## What is and is not observable
+
+Direct Mode tests can deterministically inject valid, malformed, adversarial and disagreeing assessment results and prove that the contract rejects unsupported classifications. On StudioNet, transaction receipts expose consensus votes, validator records, execution results and vote hashes, but they do not necessarily expose every validator's private prompt or reasoning. The deployment receipt recorded in `docs/LIVE_EVIDENCE.md` proves finalized contract deployment consensus; it is not a semantic case adjudication and must not be presented as one.
+
+## Failure behavior
+
+Evidence remains immutable and the case remains recoverable when semantic consensus fails. A caller must reach the next legitimate state and retry only through the published lifecycle; there is no owner, force-finalize method, centralized adjudicator, or backend fallback.
