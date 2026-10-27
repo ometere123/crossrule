@@ -39,10 +39,10 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
 * Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12)
 * Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0xc46b0b7e3e83482eb2c0b4dec2951d81dd8ba5724a14b7f1a4d7810527006f9c)
-* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app) (the exact READY deployment ID is recorded in the engineering closeout report)
+* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), Vercel deployment `dpl_2xpb1NnyTmn5LZ9vwa5dLGaQ3qBg` (`READY`, source SHA `5338d57617cfca87c995c60d69fff8b3a6bda0dd`)
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* CI baseline: [GitHub Actions run 40476952743](https://github.com/ometere123/crossrule/actions/runs/40476952743)
+* Final CI: [GitHub Actions run 40505820516](https://github.com/ometere123/crossrule/actions/runs/40505820516), 9/9 jobs successful for source SHA `5338d57617cfca87c995c60d69fff8b3a6bda0dd`
 
 ## Production UI evidence
 

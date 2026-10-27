@@ -19,6 +19,7 @@ This ledger distinguishes submitted transactions, protocol finality, execution s
 | Contract source SHA-256 | 94577d12e28208f33de8365f3cd40c23476617ed234c61a4eedf3ca07221c8ff |
 | Source parity | Returned deployment data.contract_code was base64-decoded and compared byte-for-byte with contracts/Crossrule.py; 34,759 bytes matched exactly |
 | Contract source commit | acb7e7adfef59166fd602636ab9ffb377e570840 |
+| Final Vercel deployment | [READY deployment](https://vercel.com/delealufejoel-4184s-projects/crossrule/2xpb1NnyTmn5LZ9vwa5dLGaQ3qBg), source SHA `5338d57617cfca87c995c60d69fff8b3a6bda0dd` |
 
 The single deployed contract source was not changed during the Accord Chamber frontend work, so a frontend-only release does not require a contract redeployment.
 

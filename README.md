@@ -27,6 +27,7 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
+| Vercel deployment | `dpl_2xpb1NnyTmn5LZ9vwa5dLGaQ3qBg`, READY, source SHA `5338d57617cfca87c995c60d69fff8b3a6bda0dd` |
 | Contract | `0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12` |
 | Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0x3c5C74733E10BDD4b7520e62dF8852c2Ef550D12) |
 | Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0xc46b0b7e3e83482eb2c0b4dec2951d81dd8ba5724a14b7f1a4d7810527006f9c) |
