@@ -13,6 +13,7 @@ const TX_STORE='crossrule:transactions';
 export interface Provider {request(args:{method:string;params?:unknown[]}):Promise<unknown>;on?(event:string,fn:(...args:unknown[])=>void):void;removeListener?(event:string,fn:(...args:unknown[])=>void):void;}
 declare global {interface Window {ethereum?:Provider}}
 export type PendingTx={hash:string;method:string;wallet:string;submittedAt:number};
+export type TransactionObservation={hash:string;statusName:string;executionResultName:string;resultName:string;finalized:boolean;successful:boolean};
 
 export function recentTransactions():PendingTx[] {
   if(typeof window==='undefined')return [];
@@ -24,7 +25,7 @@ export function rememberTransaction(tx:PendingTx) {
   const list=recentTransactions().filter(item=>item.hash!==tx.hash);
   window.localStorage.setItem(TX_STORE,JSON.stringify([tx,...list].slice(0,40)));
 }
-export function transactionUrl(hash:string) {return `${EXPLORER}/transactions/${hash}`;}
+export function transactionUrl(hash:string) {return `${EXPLORER}/tx/${hash}`;}
 
 function readClient() {return createClient({chain:studionet});}
 export async function read<T>(method:string,args:unknown[]=[]):Promise<T> {
@@ -58,17 +59,37 @@ export async function connectWallet():Promise<string> {
   return accounts[0].toLowerCase();
 }
 
+function finalized(value:Record<string,unknown>) {
+  return value.statusName==='FINALIZED'||value.status_name==='FINALIZED'||value.status==='FINALIZED'||value.status===7;
+}
+
+function executionName(value:Record<string,unknown>) {
+  const named=value.txExecutionResultName??value.tx_execution_result_name;
+  if(typeof named==='string')return named;
+  const numeric=value.txExecutionResult??value.tx_execution_result;
+  return numeric===1?'FINISHED_WITH_RETURN':numeric===2?'FINISHED_WITH_ERROR':numeric===0?'NOT_VOTED':'';
+}
+
 export function receiptSucceeded(value:unknown):boolean {
   if(typeof value!=='object'||!value)return false;
   const r=value as Record<string,unknown>;
-  const final=r.statusName==='FINALIZED'||r.status_name==='FINALIZED'||r.status===7;
-  if(!final)return false;
-  const execution=r.txExecutionResultName??r.tx_execution_result_name;
-  if(typeof execution==='string')return execution===ExecutionResult.FINISHED_WITH_RETURN;
+  if(!finalized(r))return false;
+  const execution=executionName(r);
+  if(execution)return execution===ExecutionResult.FINISHED_WITH_RETURN;
   const data=(r.consensusData??r.consensus_data) as Record<string,unknown>|undefined;
   const receipts=data?.leader_receipt;
   const leader=Array.isArray(receipts)?receipts[0] as Record<string,unknown>:null;
-  return (r.resultName==='MAJORITY_AGREE'||r.result_name==='MAJORITY_AGREE') && leader?.execution_result==='SUCCESS';
+  const result=r.resultName??r.result_name??(typeof r.result==='number'&&r.result===6?'MAJORITY_AGREE':'');
+  return result==='MAJORITY_AGREE' && leader?.execution_result==='SUCCESS';
+}
+
+export async function inspectTransaction(hash:string):Promise<TransactionObservation> {
+  if(!/^0x[0-9a-f]{64}$/i.test(hash))throw new Error('Invalid transaction ID.');
+  const value=await readClient().getTransaction({hash:hash as Hash}) as unknown as Record<string,unknown>;
+  return {hash,statusName:String(value.statusName??value.status_name??value.status??'UNKNOWN'),
+    executionResultName:executionName(value)||'UNKNOWN',
+    resultName:String(value.resultName??value.result_name??value.result??'UNKNOWN'),
+    finalized:finalized(value),successful:receiptSucceeded(value)};
 }
 export async function awaitFinalized(hash:string) {
   if(!/^0x[0-9a-f]{64}$/i.test(hash))throw new Error('Invalid transaction ID.');

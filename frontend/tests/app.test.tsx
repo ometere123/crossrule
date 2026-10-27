@@ -7,7 +7,7 @@ afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 vi.mock('@/lib/chain',()=>({
   NETWORK_ID:61999,isConfigured:false,ADDRESS:'',
   connectWallet:vi.fn(),readJson:vi.fn(),write:vi.fn(),
-  recentTransactions:()=>[],transactionUrl:(hash:string)=>`https://explorer-studio.genlayer.com/transactions/${hash}`
+  recentTransactions:()=>[],transactionUrl:(hash:string)=>`https://explorer-studio.genlayer.com/tx/${hash}`
 }));
 import CrossruleApp from '@/components/CrossruleApp';
 

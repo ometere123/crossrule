@@ -8,5 +8,6 @@ artifacts/
 __pycache__/
 .pytest_cache/
 *.pyc
+.tmp-*/
 playwright-report/
 test-results/

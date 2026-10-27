@@ -214,3 +214,143 @@ def test_validator_rejects_classification_disagreement(direct_deploy, direct_vm,
     bad = dict(good, finding="SERIOUS_BREACH")
     vm.mock_llm(r"You interpret a JOINTLY RATIFIED", json.dumps(bad))
     assert vm.run_validator() is False
+
+
+def test_wrong_founder_cannot_accept_or_repeat_consent(direct_deploy, direct_vm, direct_accounts):
+    contract = direct_deploy(CONTRACT)
+    vm = direct_vm
+    vm.sender = direct_accounts[0]
+    cid = contract.create_community("Builders", "Technical builders", "Evidence matters",
+                                    wallet(direct_accounts[1]), wallet(direct_accounts[2]), 2)
+    vm.sender = direct_accounts[9]
+    with vm.expect_revert("not invited"):
+        contract.accept_foundership(cid)
+    vm.sender = direct_accounts[1]
+    contract.accept_foundership(cid)
+    with vm.expect_revert("not invited"):
+        contract.accept_foundership(cid)
+
+
+def test_overlapping_membership_cannot_cross_a_bilateral_boundary(direct_deploy, direct_vm, direct_accounts):
+    contract = direct_deploy(CONTRACT)
+    vm = direct_vm
+    a, b = active_communities(contract, vm, direct_accounts)
+    vm.sender = direct_accounts[0]
+    contract.propose_member(a, wallet(direct_accounts[6]))
+    vm.sender = direct_accounts[6]
+    contract.accept_membership(a)
+    for idx in (0, 1):
+        vm.sender = direct_accounts[idx]
+        contract.vote_member(a, True)
+    contract.finalize_member(a)
+    vm.sender = direct_accounts[3]
+    contract.propose_member(b, wallet(direct_accounts[6]))
+    vm.sender = direct_accounts[6]
+    contract.accept_membership(b)
+    for idx in (3, 4):
+        vm.sender = direct_accounts[idx]
+        contract.vote_member(b, True)
+    contract.finalize_member(b)
+    vm.sender = direct_accounts[0]
+    with vm.expect_revert("wallet represents both"):
+        contract.propose_room(a, b, "No overlapping voting identities", CLAUSES, 2, 2, 2, 2)
+
+
+def test_pending_agreement_keeps_its_original_voter_snapshot(direct_deploy, direct_vm, direct_accounts):
+    contract = direct_deploy(CONTRACT)
+    vm = direct_vm
+    a, b = active_communities(contract, vm, direct_accounts)
+    vm.sender = direct_accounts[0]
+    rid = contract.propose_room(a, b, "Frozen roster policy", CLAUSES, 2, 2, 2, 2)
+    contract.propose_member(a, wallet(direct_accounts[6]))
+    vm.sender = direct_accounts[6]
+    contract.accept_membership(a)
+    for idx in (0, 1):
+        vm.sender = direct_accounts[idx]
+        contract.vote_member(a, True)
+    contract.finalize_member(a)
+    vm.sender = direct_accounts[6]
+    with vm.expect_revert("voting snapshot"):
+        contract.vote_agreement(rid, True)
+    for idx in (0, 1, 3, 4):
+        vm.sender = direct_accounts[idx]
+        contract.vote_agreement(rid, True)
+    contract.finalize_agreement(rid)
+
+
+def test_cross_room_reply_is_rejected_in_direct_mode(direct_deploy, direct_vm, direct_accounts):
+    contract = direct_deploy(CONTRACT)
+    vm = direct_vm
+    a, b = active_communities(contract, vm, direct_accounts)
+    vm.sender = direct_accounts[0]
+    first = contract.propose_room(a, b, "Room one", CLAUSES, 2, 2, 2, 2)
+    second = contract.propose_room(a, b, "Room two", CLAUSES, 2, 2, 2, 2)
+    for rid in (first, second):
+        for idx in (0, 1, 3, 4):
+            vm.sender = direct_accounts[idx]
+            contract.vote_agreement(rid, True)
+        contract.finalize_agreement(rid)
+    vm.sender = direct_accounts[0]
+    pid = contract.publish_post(first, 0, TEXT)
+    with vm.expect_revert("cross-room"):
+        contract.publish_post(second, pid, "This parent is from another room.")
+
+
+def test_minor_only_clause_rejects_serious_direct_consensus(direct_deploy, direct_vm, direct_accounts):
+    vm = direct_vm
+    vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    a, b = active_communities(contract, vm, direct_accounts)
+    minor = json.dumps([{"id": "ONLY-MINOR", "text": "Only ordinary evidence mistakes are minor.", "max_severity": "MINOR"}])
+    vm.sender = direct_accounts[0]
+    rid = contract.propose_room(a, b, "Minor-only policy", minor, 2, 2, 2, 2)
+    for idx in (0, 1, 3, 4):
+        vm.sender = direct_accounts[idx]
+        contract.vote_agreement(rid, True)
+    contract.finalize_agreement(rid)
+    vm.sender = direct_accounts[0]
+    pid = contract.publish_post(rid, 0, TEXT)
+    vm.sender = direct_accounts[3]
+    cid = contract.open_case(pid, "ONLY-MINOR", "The post is alleged to be a serious breach.", "[]")
+    vm.warp("2026-10-26T12:03:00+00:00")
+    contract.freeze_case(cid)
+    serious = json.dumps({"finding": "SERIOUS_BREACH", "clause_id": "ONLY-MINOR",
+        "anchor": "20-contract benchmark includes seeded flaws",
+        "reason": "The frozen post allegedly violates a clause that only authorizes minor severity."})
+    vm.mock_llm(r"You interpret a JOINTLY RATIFIED", serious)
+    with vm.expect_revert("not authorized"):
+        contract.adjudicate_case(cid)
+
+
+def test_invalid_clause_and_forged_context_fail_closed(direct_deploy, direct_vm, direct_accounts):
+    contract = direct_deploy(CONTRACT)
+    vm = direct_vm
+    rid = ratified_room(contract, vm, direct_accounts)
+    vm.sender = direct_accounts[0]
+    pid = contract.publish_post(rid, 0, TEXT)
+    vm.sender = direct_accounts[3]
+    with vm.expect_revert("unknown clause"):
+        contract.open_case(pid, "NOT-RATIFIED", "Invalid clause reference", "[]")
+    with vm.expect_revert("invalid context selection"):
+        contract.open_case(pid, "PROMO", "Forged context", '[{"fake":"post"}]')
+
+
+def test_non_adverse_party_cannot_open_application_appeal(direct_deploy, direct_vm, direct_accounts):
+    vm = direct_vm
+    vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    rid = ratified_room(contract, vm, direct_accounts)
+    vm.sender = direct_accounts[0]
+    pid = contract.publish_post(rid, 0, TEXT)
+    vm.sender = direct_accounts[3]
+    cid = contract.open_case(pid, "PROMO", "Possible promotion", "[]")
+    vm.warp("2026-10-26T12:03:00+00:00")
+    contract.freeze_case(cid)
+    decision = json.dumps({"finding": "MINOR_BREACH", "clause_id": "PROMO",
+        "anchor": "20-contract benchmark includes seeded flaws",
+        "reason": "The frozen passage is a minor breach of the ratified promotion rule."})
+    vm.mock_llm(r"You interpret a JOINTLY RATIFIED", decision)
+    contract.adjudicate_case(cid)
+    vm.sender = direct_accounts[3]
+    with vm.expect_revert("adversely affected"):
+        contract.open_appeal(cid, "The reporter cannot appeal this author sanction.")

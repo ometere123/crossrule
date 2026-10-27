@@ -4,6 +4,7 @@ This is NOT a replacement for GenVM Direct Mode or live validator evidence.
 It runs the same Python contract methods without a network to catch lifecycle bugs.
 """
 import importlib.util
+import hashlib
 import json
 import pathlib
 import re
@@ -261,6 +262,7 @@ class CrossruleLifecycle(unittest.TestCase):
         self.assertEqual(history['original_decision']['finding'],'SERIOUS_BREACH')
         self.actor(0)
         self.assertFalse(self.record(self.contract.get_restriction(rid,self.wallets[0]))['suspended'])
+        self.assertEqual(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'],[])
 
     def test_nonadverse_party_cannot_appeal(self):
         _,_,cid=self.frozen_case()
@@ -336,6 +338,26 @@ class CrossruleLifecycle(unittest.TestCase):
         self.assertEqual(existing['policy_version'],1)
         self.assertEqual(existing['policy'],old)
 
+    def test_open_case_is_adjudicated_under_its_frozen_policy_version(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','Possible solicitation.','[]')
+        self.actor(0)
+        minor_clause=json.dumps([{'id':'PROMO','text':'A later policy narrows the allowed severity.','max_severity':'MINOR'}])
+        self.contract.propose_amendment(rid,'Later policy',minor_clause,2,2,2,2)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.contract.finalize_agreement(rid)
+        self.clock=self.record(self.contract.get_case(cid))['defense_due']+1
+        self.contract.freeze_case(cid)
+        self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_case(cid)
+        self.assertEqual(self.record(self.contract.get_case(cid))['policy_version'],1)
+        self.assertEqual(self.record(self.contract.get_case(cid))['finding'],'SERIOUS_BREACH')
+
     def test_insufficient_evidence_preserves_visible_post(self):
         _,pid,cid=self.frozen_case()
         self.mock(finding('INSUFFICIENT_EVIDENCE'),finding('INSUFFICIENT_EVIDENCE'))
@@ -367,6 +389,44 @@ class CrossruleLifecycle(unittest.TestCase):
         self.actor(0)
         with self.assertRaisesRegex(UserError,'appeal not available'):
             self.contract.open_appeal(cid,'Very late submission.')
+
+    def test_duplicate_application_appeal_is_rejected(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        rid=self.contract.propose_room(ca,cb,'Longer appeal window',CLAUSES,5,2,10,5)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.contract.finalize_agreement(rid)
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','Please reconsider this case.','[]')
+        self.clock=self.record(self.contract.get_case(cid))['defense_due']+1
+        self.contract.freeze_case(cid)
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_case(cid)
+        self.actor(0)
+        self.contract.open_appeal(cid,'Please reconsider the frozen context.')
+        self.clock=self.record(self.contract.get_case(cid))['appeal']['response_due']+1
+        self.contract.freeze_appeal(cid)
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_appeal(cid)
+        with self.assertRaisesRegex(UserError,'appeal not available'):
+            self.contract.open_appeal(cid,'A second application appeal.')
+
+    def test_appeal_freeze_requires_time_strictly_after_response_deadline(self):
+        _,_,cid=self.frozen_case()
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_case(cid)
+        self.actor(0)
+        self.contract.open_appeal(cid,'Please reconsider the frozen context.')
+        due=self.record(self.contract.get_case(cid))['appeal']['response_due']
+        self.clock=due
+        with self.assertRaisesRegex(UserError,'still active'):
+            self.contract.freeze_appeal(cid)
+        self.clock=due+1
+        self.contract.freeze_appeal(cid)
 
     def test_only_author_may_submit_defense(self):
         rid=self.room()
@@ -414,6 +474,280 @@ class CrossruleLifecycle(unittest.TestCase):
         after=self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'][0]['until']
         self.assertEqual(first,after)
         self.assertEqual(self.record(self.contract.get_case(cid))['original_finding'],'SERIOUS_BREACH')
+
+    def test_wrong_wallet_cannot_accept_foundership_or_repeat_consent(self):
+        self.actor(0)
+        cid=self.contract.create_community('Builders','Description','Charter',self.wallets[1],self.wallets[2],5)
+        self.actor(7)
+        with self.assertRaisesRegex(UserError,'not invited'):
+            self.contract.accept_foundership(cid)
+        self.actor(1)
+        self.contract.accept_foundership(cid)
+        with self.assertRaisesRegex(UserError,'not invited'):
+            self.contract.accept_foundership(cid)
+        self.assertEqual(self.record(self.contract.get_community(cid))['status'],'FOUNDING')
+
+    def test_existing_overlap_is_rejected_when_pairing_communities(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        self.contract.propose_member(ca,self.wallets[6])
+        self.actor(6)
+        self.contract.accept_membership(ca)
+        for slot in (0,1):
+            self.actor(slot)
+            self.contract.vote_member(ca,True)
+        self.contract.finalize_member(ca)
+        self.actor(3)
+        self.contract.propose_member(cb,self.wallets[6])
+        self.actor(6)
+        self.contract.accept_membership(cb)
+        for slot in (3,4):
+            self.actor(slot)
+            self.contract.vote_member(cb,True)
+        self.contract.finalize_member(cb)
+        self.actor(0)
+        with self.assertRaisesRegex(UserError,'wallet represents both'):
+            self.contract.propose_room(ca,cb,'No overlap',CLAUSES,5,5,5,5)
+
+    def test_overlap_admission_is_rejected_after_room_creation_and_while_pending(self):
+        ca,cb,rid=self.proposal()
+        self.actor(3)
+        self.contract.propose_member(cb,self.wallets[0])
+        self.actor(0)
+        with self.assertRaisesRegex(UserError,'overlap bilateral'):
+            self.contract.accept_membership(cb)
+        self.actor(3)
+        self.clock=self.record(self.contract.get_community(cb))['member_vote']['due']+1
+        self.contract.finalize_member(cb)
+        record=self.record(self.contract.get_community(cb))
+        self.assertIsNone(record['member_vote'])
+        self.assertNotIn(self.wallets[0],record['members'])
+        self.assertEqual(self.record(self.contract.get_room(rid))['status'],'RATIFYING')
+
+    def test_membership_added_during_pending_vote_does_not_change_snapshot(self):
+        ca,cb,rid=self.proposal()
+        self.actor(0)
+        self.contract.propose_member(ca,self.wallets[6])
+        self.actor(6)
+        self.contract.accept_membership(ca)
+        for slot in (0,1):
+            self.actor(slot)
+            self.contract.vote_member(ca,True)
+        self.contract.finalize_member(ca)
+        vote=self.record(self.contract.get_room(rid))['vote']
+        self.assertEqual(len(vote['voters_a']),3)
+        self.assertNotIn(self.wallets[6],vote['voters_a'])
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.contract.finalize_agreement(rid)
+        self.assertEqual(self.record(self.contract.get_room(rid))['status'],'ACTIVE')
+
+    def test_clause_schema_is_canonical_bounded_and_strict(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        clauses=json.dumps([{'id':'  RULE  ','text':'  A bounded rule.  ','max_severity':'MINOR'}])
+        rid=self.contract.propose_room(ca,cb,'Joint text',clauses,5,5,5,5)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.contract.finalize_agreement(rid)
+        policy=self.record(self.contract.get_room(rid))['policies'][0]['policy']
+        self.assertEqual(policy['clauses'][0],{'id':'RULE','text':'A bounded rule.','max_severity':'MINOR'})
+        self.actor(0)
+        with self.assertRaisesRegex(UserError,'bad clause'):
+            self.contract.propose_amendment(rid,'Bad',json.dumps([{'id':'X','text':'ok','max_severity':'MINOR','extra':1}]),5,5,5,5)
+        with self.assertRaisesRegex(UserError,'duplicate/invalid'):
+            self.contract.propose_amendment(rid,'Bad',json.dumps([{'id':'X','text':'ok','max_severity':['SERIOUS']}]),5,5,5,5)
+        with self.assertRaisesRegex(UserError,'invalid clause text'):
+            self.contract.propose_amendment(rid,'Bad',json.dumps([{'id':'X','text':'é'*276,'max_severity':'MINOR'}]),5,5,5,5)
+
+    def test_invalid_clause_cannot_open_case(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.actor(3)
+        with self.assertRaisesRegex(UserError,'unknown clause'):
+            self.contract.open_case(pid,'NOT-RATIFIED','A claim','[]')
+
+    def test_exact_deadline_allows_defense_but_not_freeze(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','A claim','[]')
+        due=self.record(self.contract.get_case(cid))['defense_due']
+        self.clock=due
+        self.actor(0)
+        self.contract.submit_defense(cid,'A timely formal defense.')
+        with self.assertRaisesRegex(UserError,'still active'):
+            self.contract.freeze_case(cid)
+        self.clock=due+1
+        self.contract.freeze_case(cid)
+
+    def test_duplicate_defense_and_late_defense_are_rejected(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','A claim','[]')
+        self.actor(0)
+        self.contract.submit_defense(cid,'First defense.')
+        with self.assertRaisesRegex(UserError,'defense window closed'):
+            self.contract.submit_defense(cid,'Replacement defense.')
+        self.clock=self.record(self.contract.get_case(cid))['defense_due']+1
+        with self.assertRaisesRegex(UserError,'defense window closed'):
+            self.contract.submit_defense(cid,'Late defense.')
+
+    def test_context_ids_are_unique_prior_same_room_records(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        r1=self.contract.propose_room(ca,cb,'Room one',CLAUSES,2,2,2,2)
+        r2=self.contract.propose_room(ca,cb,'Room two',CLAUSES,2,2,2,2)
+        for rid in (r1,r2):
+            for slot in (0,1,3,4):
+                self.actor(slot)
+                self.contract.vote_agreement(rid,True)
+            self.contract.finalize_agreement(rid)
+        self.actor(0)
+        other=self.contract.publish_post(r2,0,POST)
+        target=self.contract.publish_post(r1,0,POST)
+        self.actor(3)
+        with self.assertRaisesRegex(UserError,'context must belong'):
+            self.contract.open_case(target,'PROMO','Cross-room context',json.dumps([other]))
+        with self.assertRaisesRegex(UserError,'invalid context selection'):
+            self.contract.open_case(target,'PROMO','Duplicate context',json.dumps([1,1]))
+
+    def test_frozen_digest_covers_identity_and_evidence_fields(self):
+        rid,pid,cid=self.frozen_case()
+        record=self.record(self.contract.get_case(cid))
+        digest=record['digest']
+        evidence=self.contract._evidence(record)
+        self.assertEqual(hashlib.sha256(evidence.encode('utf-8')).hexdigest(),digest)
+        record['reporter']=self.wallets[4]
+        self.assertNotEqual(hashlib.sha256(self.contract._evidence(record).encode('utf-8')).hexdigest(),digest)
+        record['reporter']=self.wallets[3]
+        record['allegation']='A materially different allegation.'
+        self.assertNotEqual(hashlib.sha256(self.contract._evidence(record).encode('utf-8')).hexdigest(),digest)
+        stored=self.record(self.contract.get_case(cid))
+        stored['allegation']='tampered after freeze'
+        self.contract.cases[cid]=self.contract._dump(stored)
+        with self.assertRaisesRegex(UserError,'evidence hash mismatch'):
+            self.contract.adjudicate_case(cid)
+
+    def test_unicode_normalization_is_byte_distinct_in_canonical_json(self):
+        composed={'text':'é'}
+        decomposed={'text':'e\u0301'}
+        self.assertNotEqual(self.contract._dump(composed),self.contract._dump(decomposed))
+        self.assertNotEqual(hashlib.sha256(self.contract._dump(composed).encode('utf-8')).hexdigest(),
+                            hashlib.sha256(self.contract._dump(decomposed).encode('utf-8')).hexdigest())
+
+    def test_hidden_post_cannot_complete_pending_feature_vote(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',CLAUSES,10,2,5,5)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.contract.finalize_agreement(rid)
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.contract.propose_feature(rid,pid)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','Possible promotion','[]')
+        self.clock=self.record(self.contract.get_case(cid))['defense_due']+1
+        self.contract.freeze_case(cid)
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_case(cid)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_feature(rid,True)
+        self.contract.finalize_feature(rid)
+        room=self.record(self.contract.get_room(rid))
+        self.assertEqual(room['featured_post'],0)
+        self.assertIsNone(room['feature_vote'])
+
+    def test_feature_and_unfeature_are_bilateral(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.contract.propose_feature(rid,pid)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_feature(rid,True)
+        self.contract.finalize_feature(rid)
+        self.assertEqual(self.record(self.contract.get_room(rid))['featured_post'],pid)
+        self.actor(0)
+        self.contract.propose_feature(rid,0)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_feature(rid,True)
+        self.contract.finalize_feature(rid)
+        self.assertEqual(self.record(self.contract.get_room(rid))['featured_post'],0)
+
+    def test_room_and_wallet_restrictions_are_independent(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        r1=self.contract.propose_room(ca,cb,'Room one',CLAUSES,2,2,2,10)
+        r2=self.contract.propose_room(ca,cb,'Room two',CLAUSES,2,2,2,10)
+        for rid in (r1,r2):
+            for slot in (0,1,3,4):
+                self.actor(slot)
+                self.contract.vote_agreement(rid,True)
+            self.contract.finalize_agreement(rid)
+        self.actor(0)
+        p1=self.contract.publish_post(r1,0,POST)
+        p2=self.contract.publish_post(r2,0,POST)
+        self.actor(3)
+        c1=self.contract.open_case(p1,'PROMO','Case one','[]')
+        c2=self.contract.open_case(p2,'PROMO','Case two','[]')
+        due=max(self.record(self.contract.get_case(c1))['defense_due'],self.record(self.contract.get_case(c2))['defense_due'])
+        self.clock=due+1
+        self.contract.freeze_case(c1)
+        self.contract.freeze_case(c2)
+        self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'),finding(),finding())
+        self.contract.adjudicate_case(c1)
+        self.contract.adjudicate_case(c2)
+        self.actor(0)
+        self.contract.open_appeal(c1,'The first case should be reconsidered.')
+        self.clock=self.record(self.contract.get_case(c1))['appeal']['response_due']+1
+        self.contract.freeze_appeal(c1)
+        self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_appeal(c1)
+        self.assertTrue(self.record(self.contract.get_restriction(r1,self.wallets[0]))['suspended'])
+        self.assertFalse(self.record(self.contract.get_restriction(r2,self.wallets[0]))['suspended'])
+        with self.assertRaisesRegex(UserError,'suspension active'):
+            self.contract.publish_post(r1,0,POST)
+        self.contract.publish_post(r2,0,POST)
+
+    def test_case_appeal_response_authorization_and_single_use(self):
+        rid,pid,cid=self.frozen_case()
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_case(cid)
+        self.actor(0)
+        self.contract.open_appeal(cid,'Reconsider the context.')
+        self.actor(0)
+        with self.assertRaisesRegex(UserError,'appeal response unavailable'):
+            self.contract.submit_appeal_response(cid,'I am not the respondent.')
+        self.actor(3)
+        self.contract.submit_appeal_response(cid,'The complaint remains valid.')
+        with self.assertRaisesRegex(UserError,'appeal response unavailable'):
+            self.contract.submit_appeal_response(cid,'Replacement response.')
+        self.clock=self.record(self.contract.get_case(cid))['appeal']['response_due']+1
+        self.contract.freeze_appeal(cid)
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_appeal(cid)
+        self.assertEqual(self.record(self.contract.get_case(cid))['status'],'CLOSED')
+
+    def test_post_cap_and_public_page_bound_are_enforced(self):
+        rid=self.room()
+        self.actor(0)
+        for _ in range(150):
+            self.contract.publish_post(rid,0,POST)
+        with self.assertRaisesRegex(UserError,'post cap'):
+            self.contract.publish_post(rid,0,POST)
+        with self.assertRaisesRegex(UserError,'page size'):
+            self.contract.list_posts(rid,0,21)
 
 
 if __name__=='__main__':
