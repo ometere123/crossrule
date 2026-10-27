@@ -50,6 +50,8 @@ def ratified_room(contract, vm, accounts):
     a, b = active_communities(contract, vm, accounts)
     vm.sender = accounts[0]
     rid = contract.propose_room(a, b, "Jointly ratified content standards", CLAUSES, 2, 2, 2, 2)
+    vm.sender = accounts[3]
+    contract.consent_room(rid)
     for idx in (0, 1, 3, 4):
         vm.sender = accounts[idx]
         contract.vote_agreement(rid, True)
@@ -62,6 +64,9 @@ def test_bilateral_consent_and_public_post(direct_deploy, direct_vm, direct_acco
     a, b = active_communities(contract, direct_vm, direct_accounts)
     direct_vm.sender = direct_accounts[0]
     rid = contract.propose_room(a, b, "Jointly ratified standards", CLAUSES, 2, 2, 2, 2)
+    assert parsed(contract.get_room(rid))["vote"] is None
+    direct_vm.sender = direct_accounts[3]
+    contract.consent_room(rid)
     for idx in (0, 1, 2):
         direct_vm.sender = direct_accounts[idx]
         contract.vote_agreement(rid, True)
@@ -75,6 +80,23 @@ def test_bilateral_consent_and_public_post(direct_deploy, direct_vm, direct_acco
     direct_vm.sender = direct_accounts[0]
     pid = contract.publish_post(rid, 0, TEXT)
     assert parsed(contract.get_post(pid))["status"] == "VISIBLE"
+
+
+def test_posts_continue_past_150_with_bounded_direct_pages(direct_deploy, direct_vm, direct_accounts):
+    contract = direct_deploy(CONTRACT)
+    rid = ratified_room(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    for _ in range(200):
+        contract.publish_post(rid, 0, TEXT)
+    first = parsed(contract.list_posts(rid, 0, 20))
+    middle = parsed(contract.list_posts(rid, 140, 20))
+    last = parsed(contract.list_posts(rid, 180, 20))
+    assert [post["id"] for post in first] == list(range(1, 21))
+    assert [post["id"] for post in middle] == list(range(141, 161))
+    assert [post["id"] for post in last] == list(range(181, 201))
+    assert parsed(contract.list_posts(rid, 200, 20)) == []
+    with direct_vm.expect_revert("invalid post cursor"):
+        contract.list_posts(rid, 201, 20)
 
 
 def test_nonmember_cannot_post(direct_deploy, direct_vm, direct_accounts):
@@ -140,6 +162,8 @@ def test_amended_policy_does_not_rewrite_open_case(direct_deploy, direct_vm, dir
     cid = contract.open_case(pid, "PROMO", "Possible promotion based on this text", "[]")
     direct_vm.sender = direct_accounts[0]
     contract.propose_amendment(rid, "Revised shared policy after discussion", CLAUSES, 2, 2, 2, 2)
+    direct_vm.sender = direct_accounts[3]
+    contract.consent_room(rid)
     for idx in (0, 1, 3, 4):
         direct_vm.sender = direct_accounts[idx]
         contract.vote_agreement(rid, True)
@@ -262,6 +286,9 @@ def test_pending_agreement_keeps_its_original_voter_snapshot(direct_deploy, dire
     a, b = active_communities(contract, vm, direct_accounts)
     vm.sender = direct_accounts[0]
     rid = contract.propose_room(a, b, "Frozen roster policy", CLAUSES, 2, 2, 2, 2)
+    vm.sender = direct_accounts[3]
+    contract.consent_room(rid)
+    vm.sender = direct_accounts[0]
     contract.propose_member(a, wallet(direct_accounts[6]))
     vm.sender = direct_accounts[6]
     contract.accept_membership(a)
@@ -284,8 +311,19 @@ def test_cross_room_reply_is_rejected_in_direct_mode(direct_deploy, direct_vm, d
     a, b = active_communities(contract, vm, direct_accounts)
     vm.sender = direct_accounts[0]
     first = contract.propose_room(a, b, "Room one", CLAUSES, 2, 2, 2, 2)
+    vm.sender = direct_accounts[3]
+    contract.consent_room(first)
+    for idx in (0, 1, 3, 4):
+        vm.sender = direct_accounts[idx]
+        contract.vote_agreement(first, True)
+    contract.finalize_agreement(first)
+    vm.sender = direct_accounts[0]
     second = contract.propose_room(a, b, "Room two", CLAUSES, 2, 2, 2, 2)
+    vm.sender = direct_accounts[3]
+    contract.consent_room(second)
     for rid in (first, second):
+        if parsed(contract.get_room(rid))["vote"] is None:
+            continue
         for idx in (0, 1, 3, 4):
             vm.sender = direct_accounts[idx]
             contract.vote_agreement(rid, True)
@@ -304,6 +342,8 @@ def test_minor_only_clause_rejects_serious_direct_consensus(direct_deploy, direc
     minor = json.dumps([{"id": "ONLY-MINOR", "text": "Only ordinary evidence mistakes are minor.", "max_severity": "MINOR"}])
     vm.sender = direct_accounts[0]
     rid = contract.propose_room(a, b, "Minor-only policy", minor, 2, 2, 2, 2)
+    vm.sender = direct_accounts[3]
+    contract.consent_room(rid)
     for idx in (0, 1, 3, 4):
         vm.sender = direct_accounts[idx]
         contract.vote_agreement(rid, True)

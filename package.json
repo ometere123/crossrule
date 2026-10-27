@@ -4,6 +4,6 @@
   "private": true,
   "description": "Pinned GenLayer CLI for CROSSRULE contract deployment and inspection",
   "engines": {"node": "22.x"},
-  "scripts": {"genlayer": "genlayer"},
+  "scripts": {"genlayer": "genlayer", "verify:source": "node scripts/verify_source_parity.mjs"},
   "devDependencies": {"genlayer": "0.39.1"}
 }

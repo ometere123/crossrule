@@ -57,6 +57,8 @@ function validateWrite(method:string,args:unknown[]) {
     const clausesIndex=amendment?2:3;
     requiredText(args[textIndex],'Joint agreement',3000);clauses(args[clausesIndex]);
     for(const [index,label] of (amendment?[[3,'Voting window'],[4,'Author defense'],[5,'Appeal'],[6,'Suspension']]:[[4,'Voting window'],[5,'Author defense'],[6,'Appeal'],[7,'Suspension']]) as [number,string][])duration(args[index],label);
+  } else if(method==='consent_room'||method==='expire_room_proposal'){
+    if(!Number.isInteger(args[0])||Number(args[0])<1)throw new Error('Choose a valid room proposal.');
   } else if(method==='publish_post'){
     if(!Number.isInteger(args[1])||Number(args[1])<0)throw new Error('Reply parent must be a non-negative post ID.');
     requiredText(args[2],'Post text',1200);
@@ -289,7 +291,7 @@ export default function CrossruleApp(){
       const nextRoom=await readJson<Room>('get_room',[nextPost.room_id]);
       const [a,b]=await Promise.all([readJson<Community>('get_community',[nextRoom.a]),readJson<Community>('get_community',[nextRoom.b])]);
       if(token!==selectionRef.current)return;
-      setPost(nextPost);setRoom(nextRoom);setRoomCommunityA(a);setRoomCommunityB(b);setCaseFile(null);open('post');
+      setPost(nextPost);setRoom(nextRoom);setRoomCommunityA(a);setRoomCommunityB(b);setCaseFile(null);setPostOffset(0);open('post');
     }
     catch(e){setError(String(e));}
   }
@@ -300,7 +302,7 @@ export default function CrossruleApp(){
       const nextRoom=await readJson<Room>('get_room',[nextCase.room_id]);
       const [a,b]=await Promise.all([readJson<Community>('get_community',[nextRoom.a]),readJson<Community>('get_community',[nextRoom.b])]);
       if(token!==selectionRef.current)return;
-      setCaseFile(nextCase);setRoom(nextRoom);setRoomCommunityA(a);setRoomCommunityB(b);setPost(null);open('case');
+      setCaseFile(nextCase);setRoom(nextRoom);setRoomCommunityA(a);setRoomCommunityB(b);setPost(null);setPostOffset(0);open('case');
     }
     catch(e){setError(String(e));}
   }
@@ -335,6 +337,7 @@ export default function CrossruleApp(){
   const charterVoterEligible=Boolean(community?.charter_vote&&walletKey&&community.charter_vote.voters.some(voter=>voter.toLowerCase()===walletKey)&&!community.charter_vote.yes.some(voter=>voter.toLowerCase()===walletKey)&&!community.charter_vote.no.some(voter=>voter.toLowerCase()===walletKey));
   const agreementVoterEligible=Boolean(room?.vote&&walletKey&&([...room.vote.voters_a,...room.vote.voters_b].some(voter=>voter.toLowerCase()===walletKey))&&(!room?.vote.yes_a.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.vote.yes_b.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.vote.no_a.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.vote.no_b.some(voter=>voter.toLowerCase()===walletKey)));
   const featureVoterEligible=Boolean(room?.feature_vote&&walletKey&&([...room.feature_vote.voters_a,...room.feature_vote.voters_b].some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.yes_a.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.yes_b.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.no_a.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.no_b.some(voter=>voter.toLowerCase()===walletKey)));
+  const roomConsentEligible=Boolean(room?.consent&&walletKey&&((memberOf(roomCommunityA)&&!room.consent.consented_a)||(memberOf(roomCommunityB)&&!room.consent.consented_b)));
   const collaborationEligible=memberOf(collabCommunityA)||memberOf(collabCommunityB);
   const challengeEligible=Boolean(post&&!post.case_id&&roomMember&&walletKey&&post.author.toLowerCase()!==walletKey);
   const appealEligible=Boolean(caseFile&&caseFile.status==='DECIDED'&&!caseFile.appeal&&walletKey&&((['MINOR_BREACH','SERIOUS_BREACH'] as string[]).includes(caseFile.finding)?caseFile.author.toLowerCase()===walletKey:caseFile.reporter.toLowerCase()===walletKey));
@@ -431,10 +434,18 @@ export default function CrossruleApp(){
 
     {screen==='rooms'&&<><div className="section-head"><div><span className="eyebrow">Bilateral spaces</span><h2>Shared rooms</h2></div><button className="btn" onClick={()=>open('collaborate')}><Plus size={15}/>New collaboration</button></div>
       <div className="grid2">{rooms.map(r=><button key={r.id} className="panel" style={{textAlign:'left'}} onClick={()=>void chooseRoom(r.id)}><div className="between"><h2>Room #{r.id}</h2><Status value={r.status}/></div>
-        <p className="muted">Community #{r.a} × Community #{r.b}</p><div className="between small"><span>Agreement v{r.version}</span><span>{r.post_count} posts <ArrowRight size={14} style={{display:'inline'}}/></span></div></button>)}</div>{!rooms.length&&<Empty>{emptyMessage}</Empty>}{(rooms.at(-1)?.id??1)>1&&<button className="btn ghost" onClick={()=>void showOlder('rooms')} disabled={loading}>Load older rooms</button>}</>}
+        <p className="muted">Community #{r.a} × Community #{r.b}</p><div className="between small"><span>Agreement v{r.version}{r.proposal_pending?' · Proposal pending':''}</span><span>{r.post_count} posts <ArrowRight size={14} style={{display:'inline'}}/></span></div></button>)}</div>{!rooms.length&&<Empty>{emptyMessage}</Empty>}{(rooms.at(-1)?.id??1)>1&&<button className="btn ghost" onClick={()=>void showOlder('rooms')} disabled={loading}>Load older rooms</button>}</>}
 
     {screen==='room'&&room&&<><div className="section-head"><div><button className="btn tiny ghost" onClick={()=>open('rooms')}><ArrowLeft size={14}/>All rooms</button>
-      <h2 style={{marginTop:15}}>Community #{room.a} × Community #{room.b}</h2><p className="muted small">Room #{room.id} · Policy version {room.version} · {room.posts.length} posts</p></div><Status value={room.status}/></div>
+      <h2 style={{marginTop:15}}>Community #{room.a} × Community #{room.b}</h2><p className="muted small">Room #{room.id} · Policy version {room.version} · {room.post_count} posts</p></div><Status value={room.status}/></div>
+      {room.consent&&<Panel title={room.consent.kind==='INITIAL'?'Counterpart consent required':'Amendment consent required'}>
+        <p className="prose">The proposal is held in a bounded consent stage. One community cannot force the other into a ratification vote; a member of each side must opt in before either roster can vote.</p>
+        <div className="grid2"><div className="item"><div className="between"><b>Community A</b><span className={`pill ${room.consent.consented_a?'':'warning'}`}>{room.consent.consented_a?'Consented':'Waiting'}</span></div>{room.consent.consent_by_a&&<span className="address muted">{truncate(room.consent.consent_by_a,20)}</span>}</div>
+          <div className="item"><div className="between"><b>Community B</b><span className={`pill ${room.consent.consented_b?'':'warning'}`}>{room.consent.consented_b?'Consented':'Waiting'}</span></div>{room.consent.consent_by_b&&<span className="address muted">{truncate(room.consent.consent_by_b,20)}</span>}</div></div>
+        <div className="item"><b>Proposed agreement</b><p className="prose small">{room.consent.policy.text}</p><span className="footnote">The policy and all timing values are frozen into the next vote.</span></div>
+        <p>{times(room.consent.due)}</p><div className="row" style={{flexWrap:'wrap'}}>{mini('consent_room',[room.id],'Give my community consent',roomConsentEligible)}{secondsLeft(room.consent.due,now)===0&&mini('expire_room_proposal',[room.id],'Expire proposal')}</div>
+        <p className="footnote">After a successful moderation appeal, visibility may return, but featured status still requires a fresh bilateral feature vote.</p>
+      </Panel>}
       {room.vote&&<Panel title={room.version?'Pending policy amendment':'Joint ratification'}>
         <p className="prose">{(room.vote.data as {text:string}).text}</p>
         <div className="grid2"><div className="item"><b>Community A</b><div className="stats">{room.vote.yes_a.length}/{threshold(room.vote.voters_a.length)}</div></div>
@@ -448,17 +459,17 @@ export default function CrossruleApp(){
         <Field label="Your public contribution" value={value('postText')} onChange={v=>change('postText',v)} rows={5} max={1200}/>
         <Field label="Reply to post ID (0 for a new thread)" value={value('parent')} onChange={v=>change('parent',v)} type="number" min={0}/>
         {act('publish_post',[room.id,asNumber(value('parent')),value('postText')],'Publish on-chain',roomMember)}
-        <div className="footnote">Immutable after submission. Posted data remains publicly inspectable even if moderated.</div>
-      </Panel><Panel title="Discussion feed" aside={<span className="pill">{room.posts.length} posts</span>}>
+        <div className="footnote">Immutable after submission. Posted data remains publicly inspectable even if moderated. This room uses stable post IDs and bounded pages, so publishing continues beyond the original 150-post milestone.</div>
+      </Panel><Panel title="Discussion feed" aside={<span className="pill">{room.post_count} posts</span>}>
         {roomPosts.length?roomPosts.map(p=><button key={p.id} className="item" style={{width:'100%',textAlign:'left'}} onClick={()=>void choosePost(p.id)}>
           <div className="between"><span className="address">{truncate(p.author,19)}</span><Status value={p.status}/></div>
           <p className="prose">{p.status==='HIDDEN'?'This post is hidden from the official feed. Public chain records remain available.':p.body}</p>
           <div className="between small muted"><span>#{p.id}{p.parent_id?` · Reply to #${p.parent_id}`:''}{room.featured_post===p.id?' · Featured':''}</span><span>{formatTime(p.at)}</span></div>
         </button>):<Empty>No posts yet. Publish the first discussion.</Empty>}
-        <div className="row">{postOffset>0&&<button className="btn tiny ghost" onClick={()=>setPostOffset(Math.max(0,postOffset-20))}>Previous</button>}
-          {room.posts.length>postOffset+20&&<button className="btn tiny ghost" onClick={()=>setPostOffset(postOffset+20)}>Next</button>}</div>
+        <div className="row">{postOffset>0&&<button className="btn tiny ghost" onClick={()=>setPostOffset(Math.max(0,postOffset-20))}>Previous page</button>}
+          {room.post_count>postOffset+20&&<button className="btn tiny ghost" onClick={()=>setPostOffset(postOffset+20)}>Load next page</button>}</div>
       </Panel></div><div className="stack"><Panel title="Room constitution"><span className="pill">Ratified v{room.version}</span><p className="prose small">{policy?.text}</p><button className="btn secondary tiny" onClick={()=>setRoomTab('rules')}>Read all clauses <ArrowRight size={14}/></button></Panel>
-        <Panel title="Featured discussion"><p className="small muted">Featured posts require independent approval by both communities.</p>
+        <Panel title="Featured discussion"><p className="small muted">Featured posts require independent approval by both communities. If moderation restores a post, its former feature endorsement does not silently return; propose a fresh feature vote.</p>
           <div className="item">{room.featured_post?`Post #${room.featured_post}`:'No post currently featured'}</div>
           {room.feature_vote&&<p className="small">Pending candidate #{String(room.feature_vote.data)} · {times(room.feature_vote.due)}</p>}
           <Field label="Feature post ID (0 to unfeature)" value={value('featurePost')} onChange={v=>change('featurePost',v)} type="number" min={0}/>
@@ -487,9 +498,9 @@ export default function CrossruleApp(){
       <h2 style={{marginTop:15}}>Post #{post.id}</h2><p className="muted small">{post.author} · {formatTime(post.at)}</p></div><Status value={post.status}/></div>
       <div className="grid2"><Panel title="Published contribution"><p className="prose">{post.body}</p>
         <div className="divider"/><div className="between"><span className="small muted">Room #{post.room_id} · Parent #{post.parent_id||'none'}</span>{post.case_id?<button className="btn secondary tiny" onClick={()=>void chooseCase(post.case_id)}>Inspect case #{post.case_id}</button>:<span className="pill">No case</span>}</div>
-        <div className="footnote">This is an immutable public on-chain record. Hiding from a room feed is not deletion.</div>
+        <div className="footnote">This is an immutable public on-chain record. Hiding from a room feed is not deletion. The post ID, author and any frozen case remain stable.</div>
       </Panel><Panel title="Challenge under a shared rule">
-        {post.case_id?<div className="notice">This post already has a case. Reports cannot be duplicated. Open case #{post.case_id} to review its evidence and outcome.</div>:<>
+        {post.case_id?<div className="notice">This post already has its one finality-bound case. Reports cannot be duplicated, even after a successful appeal restores visibility. Open case #{post.case_id} to review its frozen evidence and outcome; a restored post needs a fresh bilateral feature vote.</div>:<>
           <SelectField label="Applicable clause" value={value('clause')} onChange={v=>change('clause',v)} options={[{value:'',label:'Select clause'},...(policy?.clauses??[]).map(c=>({value:c.id,label:`${c.id} — ${c.text.slice(0,65)}`}))]}/>
           <Field label="Your evidence-grounded allegation" value={value('allegation')} onChange={v=>change('allegation',v)} rows={6} max={1200}/>
           <Field label="Context post IDs (comma separated, up to 3)" value={value('context')} onChange={v=>change('context',v)} placeholder="12, 13" help="Only earlier posts within this room; their original text is frozen with the case."/>

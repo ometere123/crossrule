@@ -6,6 +6,7 @@ detects the changed contract behavior; import or test-runner failures are
 reported as harness errors instead of being counted as kills.
 """
 import importlib.util
+import json
 import pathlib
 import types
 import unittest
@@ -60,7 +61,7 @@ MUTATIONS = [
      "self._require(hashlib.sha256(evidence.encode(\"utf-8\")).hexdigest() == case[\"digest\"],\n                      \"evidence hash mismatch\")",
      "self._require(True, \"evidence hash mismatch\")"),
     ("independent_classification", "test_substantive_validator_disagreement_rejects",
-     "return (valid_finding(independent, clause_id, post_text) and\n                    proposed[\"finding\"] == independent[\"finding\"] and\n                    proposed[\"clause_id\"] == independent[\"clause_id\"])",
+     "return (valid_finding(independent, clause_id, post_text) and\n                    proposed[\"finding\"] == independent[\"finding\"] and\n                    proposed[\"clause_id\"] == independent[\"clause_id\"] and\n                    proposed[\"anchor\"] == independent[\"anchor\"])",
      "return True"),
     ("serious_severity_cap", "test_minor_only_clause_cannot_impose_serious_penalty",
      "self._require(finding != \"SERIOUS_BREACH\" or clause[\"max_severity\"] == \"SERIOUS\",\n                      \"serious finding not authorized by ratified clause\")",
@@ -86,6 +87,33 @@ MUTATIONS = [
     ("appeal_deadline_boundary", "test_appeal_freeze_requires_time_strictly_after_response_deadline",
      "self._require(case[\"status\"] == \"APPEAL_OPEN\" and self._now() > case[\"appeal\"][\"response_due\"],",
      "self._require(case[\"status\"] == \"APPEAL_OPEN\" and self._now() >= case[\"appeal\"][\"response_due\"],"),
+    ("counterpart_consent", "test_room_requires_counterpart_consent_before_ratification",
+     "self._require(not consent[\"consented_a\"], \"community already consented\")",
+     "self._require(True, \"community already consented\")"),
+    ("pending_proposal_uniqueness", "test_room_requires_counterpart_consent_before_ratification",
+     "self._require(existing_room[\"status\"] not in (\"CONSENT_PENDING\", \"RATIFYING\"),\n                          \"duplicate pending room proposal\")",
+     "self._require(True, \"duplicate pending room proposal\")"),
+    ("room_consent_expiry_boundary", "test_room_expiry_requires_time_strictly_after_deadline",
+     "self._require(self._now() > consent[\"due\"], \"room proposal still active\")",
+     "self._require(self._now() >= consent[\"due\"], \"room proposal still active\")"),
+    ("pending_capacity_release", "test_successful_ratification_releases_pending_capacity",
+     "if room[\"version\"] == 1:\n                # The pair reservation remains authoritative for admission\n                # isolation, but the proposal no longer consumes the bounded\n                # pending-proposal slot once ratification is complete.\n                self._clear_pending(room)",
+     "if False:\n                self._clear_pending(room)"),
+    ("post_continuation", "test_room_posts_continue_beyond_150_and_pages_are_bounded",
+     "room[\"post_count\"] += 1",
+     "room[\"post_count\"] += 0"),
+    ("post_index_integrity", "test_room_posts_continue_beyond_150_and_pages_are_bounded",
+     "self.room_post_index[f\"{int(rid)}:{ordinal}\"] = str(int(pid))",
+     "self.room_post_index[f\"{int(rid)}:{ordinal}\"] = \"999999\""),
+    ("challenge_finality", "test_restoration_does_not_reopen_challenge_or_restore_feature",
+     "self._require(post[\"case_id\"] == 0, \"post has already been challenged\")",
+     "self._require(True, \"post has already been challenged\")"),
+    ("validator_leader_context", "test_validator_prompt_contains_untrusted_leader_proposal",
+     "independent = assess(evidence, appeal, proposed)",
+     "independent = assess(evidence, appeal)"),
+    ("feature_removed_on_moderation", "test_restoration_does_not_reopen_challenge_or_restore_feature",
+     "if post[\"status\"] == \"HIDDEN\" and room[\"featured_post\"] == post[\"id\"]:\n            room[\"featured_post\"] = 0",
+     "if post[\"status\"] == \"HIDDEN\" and room[\"featured_post\"] == post[\"id\"]:\n            room[\"featured_post\"] = post[\"id\"]"),
 ]
 
 
@@ -110,5 +138,6 @@ class SecurityMutations(unittest.TestCase):
         finally:
             base.module = original_module
         survivors=[name for name,status,_ in results if status=="survived"]
+        print("MUTATION_REPORT=" + json.dumps(results, sort_keys=True))
         self.assertFalse(survivors, f"dangerous mutations survived: {survivors}; results={results}")
-        self.assertEqual(len(results),18)
+        self.assertEqual(len(results),27)

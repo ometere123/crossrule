@@ -39,9 +39,11 @@ class FakePublic:
 
 
 responses = []
+prompts = []
 
 
 def fake_llm(prompt, response_format=None):
+    prompts.append(prompt)
     if not responses:
         raise UserError('missing mocked LLM response')
     return responses.pop(0)
@@ -100,10 +102,17 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract = module.Crossrule()
         self.contract.communities, self.contract.rooms = FakeTreeMap(), FakeTreeMap()
         self.contract.posts, self.contract.cases, self.contract.restrictions = FakeTreeMap(), FakeTreeMap(), FakeTreeMap()
+        self.contract.room_post_index = FakeTreeMap()
+        self.contract.community_partner_index = FakeTreeMap()
+        self.contract.pair_reservation_counts = FakeTreeMap()
+        self.contract.wallet_conflict_index = FakeTreeMap()
+        self.contract.pending_room_pairs = FakeTreeMap()
+        self.contract.pending_room_count = 0
         self.clock = 100000
         self.contract._now = lambda: self.clock
         self.wallets = ['0x'+f'{n:040x}' for n in range(1,9)]
         responses.clear()
+        prompts.clear()
 
     def actor(self, slot):
         gl.message.sender_address = self.wallets[slot]
@@ -127,6 +136,8 @@ class CrossruleLifecycle(unittest.TestCase):
         ca,cb=self.create_communities()
         self.actor(0)
         rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',CLAUSES,5,5,5,5)
+        self.actor(3)
+        self.contract.consent_room(rid)
         return ca,cb,rid
 
     def room(self):
@@ -156,6 +167,69 @@ class CrossruleLifecycle(unittest.TestCase):
 
     def test_empty_deployment(self):
         self.assertEqual(self.record(self.contract.get_counts())['cases'],0)
+
+    def test_room_requires_counterpart_consent_before_ratification(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        rid=self.contract.propose_room(ca,cb,'Consent-gated room',CLAUSES,5,5,5,5)
+        self.assertEqual(self.record(self.contract.get_room(rid))['status'],'CONSENT_PENDING')
+        before=self.contract.room_count
+        with self.assertRaisesRegex(UserError,'duplicate pending'):
+            self.contract.propose_room(ca,cb,'Duplicate pending room',CLAUSES,5,5,5,5)
+        self.assertEqual(self.contract.room_count,before)
+        with self.assertRaisesRegex(UserError,'community already consented'):
+            self.contract.consent_room(rid)
+        self.actor(3)
+        self.contract.consent_room(rid)
+        room=self.record(self.contract.get_room(rid))
+        self.assertEqual(room['status'],'RATIFYING')
+        self.assertEqual(len(room['vote']['voters_a']),3)
+
+    def test_expired_counterpart_consent_frees_pending_capacity(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        rid=self.contract.propose_room(ca,cb,'Expiring room',CLAUSES,2,2,2,2)
+        due=self.record(self.contract.get_room(rid))['consent']['due']
+        self.clock=due+1
+        self.contract.expire_room_proposal(rid)
+        self.assertEqual(self.record(self.contract.get_room(rid))['status'],'REJECTED')
+        self.assertEqual(self.contract.pending_room_count,0)
+        self.actor(0)
+        replacement=self.contract.propose_room(ca,cb,'Replacement room',CLAUSES,2,2,2,2)
+        self.assertNotEqual(rid,replacement)
+
+    def test_room_expiry_requires_time_strictly_after_deadline(self):
+        ca,cb=self.create_communities()
+        self.actor(0)
+        rid=self.contract.propose_room(ca,cb,'Boundary room',CLAUSES,2,2,2,2)
+        due=self.record(self.contract.get_room(rid))['consent']['due']
+        self.clock=due
+        with self.assertRaisesRegex(UserError,'still active'):
+            self.contract.expire_room_proposal(rid)
+
+    def test_successful_ratification_releases_pending_capacity(self):
+        rid=self.room()
+        self.assertEqual(self.contract.pending_room_count,0)
+        self.actor(0)
+        replacement=self.contract.propose_room(1,2,'Replacement room',CLAUSES,5,5,5,5)
+        self.assertNotEqual(rid,replacement)
+
+    def test_admission_conflict_lookup_does_not_scan_historical_rooms(self):
+        ca,cb,rid=self.proposal()
+        self.clock=self.record(self.contract.get_room(rid))['vote']['due']+1
+        self.contract.finalize_agreement(rid)
+        for _ in range(200):
+            self.actor(0)
+            old=self.contract.propose_room(ca,cb,'Rejected historical proposal',CLAUSES,2,2,2,2)
+            self.actor(3)
+            self.contract.consent_room(old)
+            self.clock=self.record(self.contract.get_room(old))['vote']['due']+1
+            self.contract.expire_room_proposal(old)
+        calls=[]
+        original=self.contract._room
+        self.contract._room=lambda number: (calls.append(number), original(number))[1]
+        self.assertFalse(self.contract._admission_conflicts_with_room(ca,self.wallets[6]))
+        self.assertEqual(calls,[])
 
     def test_duplicate_founders_rejected(self):
         self.actor(0)
@@ -237,6 +311,21 @@ class CrossruleLifecycle(unittest.TestCase):
         with self.assertRaisesRegex(UserError,'validator rejected'):
             self.contract.adjudicate_case(cid)
 
+    def test_material_anchor_disagreement_rejects(self):
+        _,_,cid=self.frozen_case()
+        self.mock(finding(anchor='20-contract benchmark includes seeded flaws'),
+                  finding(anchor='premium package'))
+        with self.assertRaisesRegex(UserError,'validator rejected'):
+            self.contract.adjudicate_case(cid)
+
+    def test_validator_prompt_contains_untrusted_leader_proposal(self):
+        _,_,cid=self.frozen_case()
+        self.mock(finding(),finding())
+        self.contract.adjudicate_case(cid)
+        self.assertGreaterEqual(len(prompts),2)
+        self.assertIn('LEADER_PROPOSAL=',prompts[1])
+        self.assertIn('untrusted candidate',prompts[1])
+
     def test_fabricated_quote_rejected(self):
         _,_,cid=self.frozen_case()
         self.mock(finding(anchor='An invented sentence with no matching evidence'))
@@ -263,6 +352,36 @@ class CrossruleLifecycle(unittest.TestCase):
         self.actor(0)
         self.assertFalse(self.record(self.contract.get_restriction(rid,self.wallets[0]))['suspended'])
         self.assertEqual(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'],[])
+
+    def test_restoration_does_not_reopen_challenge_or_restore_feature(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.contract.propose_feature(rid,pid)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_feature(rid,True)
+        self.contract.finalize_feature(rid)
+        self.assertEqual(self.record(self.contract.get_room(rid))['featured_post'],pid)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','Possible promotion','[]')
+        self.clock=self.record(self.contract.get_case(cid))['defense_due']+1
+        self.contract.freeze_case(cid)
+        self.mock(finding('MINOR_BREACH'),finding('MINOR_BREACH'))
+        self.contract.adjudicate_case(cid)
+        self.actor(0)
+        self.contract.open_appeal(cid,'The benchmark is contextual research.')
+        self.clock=self.record(self.contract.get_case(cid))['appeal']['response_due']+1
+        self.contract.freeze_appeal(cid)
+        self.mock(finding(),finding())
+        self.contract.adjudicate_appeal(cid)
+        self.assertEqual(self.record(self.contract.get_post(pid))['status'],'RESTORED')
+        self.assertEqual(self.record(self.contract.get_room(rid))['featured_post'],0)
+        self.actor(3)
+        with self.assertRaisesRegex(UserError,'already been challenged'):
+            self.contract.open_case(pid,'PROMO','A second challenge','[]')
+        self.actor(0)
+        self.contract.propose_feature(rid,pid)
 
     def test_nonadverse_party_cannot_appeal(self):
         _,_,cid=self.frozen_case()
@@ -329,6 +448,8 @@ class CrossruleLifecycle(unittest.TestCase):
         old=self.record(self.contract.get_case(cid))['policy']
         self.actor(0)
         self.contract.propose_amendment(rid,'New version is stronger on transparent disclosures.',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(rid)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
@@ -347,6 +468,8 @@ class CrossruleLifecycle(unittest.TestCase):
         self.actor(0)
         minor_clause=json.dumps([{'id':'PROMO','text':'A later policy narrows the allowed severity.','max_severity':'MINOR'}])
         self.contract.propose_amendment(rid,'Later policy',minor_clause,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(rid)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
@@ -394,6 +517,8 @@ class CrossruleLifecycle(unittest.TestCase):
         ca,cb=self.create_communities()
         self.actor(0)
         rid=self.contract.propose_room(ca,cb,'Longer appeal window',CLAUSES,5,2,10,5)
+        self.actor(3)
+        self.contract.consent_room(rid)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
@@ -441,8 +566,19 @@ class CrossruleLifecycle(unittest.TestCase):
         ca,cb=self.create_communities()
         self.actor(0)
         r1=self.contract.propose_room(ca,cb,'Room one policy',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(r1)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(r1,True)
+        self.contract.finalize_agreement(r1)
+        self.actor(0)
         r2=self.contract.propose_room(ca,cb,'Room two policy',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(r2)
         for rid in (r1,r2):
+            if self.record(self.contract.get_room(rid))["vote"] is None:
+                continue
             for slot in (0,1,3,4):
                 self.actor(slot)
                 self.contract.vote_agreement(rid,True)
@@ -548,6 +684,8 @@ class CrossruleLifecycle(unittest.TestCase):
         self.actor(0)
         clauses=json.dumps([{'id':'  RULE  ','text':'  A bounded rule.  ','max_severity':'MINOR'}])
         rid=self.contract.propose_room(ca,cb,'Joint text',clauses,5,5,5,5)
+        self.actor(3)
+        self.contract.consent_room(rid)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
@@ -603,8 +741,19 @@ class CrossruleLifecycle(unittest.TestCase):
         ca,cb=self.create_communities()
         self.actor(0)
         r1=self.contract.propose_room(ca,cb,'Room one',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(r1)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(r1,True)
+        self.contract.finalize_agreement(r1)
+        self.actor(0)
         r2=self.contract.propose_room(ca,cb,'Room two',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(r2)
         for rid in (r1,r2):
+            if self.record(self.contract.get_room(rid))["vote"] is None:
+                continue
             for slot in (0,1,3,4):
                 self.actor(slot)
                 self.contract.vote_agreement(rid,True)
@@ -646,6 +795,8 @@ class CrossruleLifecycle(unittest.TestCase):
         ca,cb=self.create_communities()
         self.actor(0)
         rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',CLAUSES,10,2,5,5)
+        self.actor(3)
+        self.contract.consent_room(rid)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
@@ -689,8 +840,19 @@ class CrossruleLifecycle(unittest.TestCase):
         ca,cb=self.create_communities()
         self.actor(0)
         r1=self.contract.propose_room(ca,cb,'Room one',CLAUSES,2,2,2,10)
+        self.actor(3)
+        self.contract.consent_room(r1)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(r1,True)
+        self.contract.finalize_agreement(r1)
+        self.actor(0)
         r2=self.contract.propose_room(ca,cb,'Room two',CLAUSES,2,2,2,10)
+        self.actor(3)
+        self.contract.consent_room(r2)
         for rid in (r1,r2):
+            if self.record(self.contract.get_room(rid))["vote"] is None:
+                continue
             for slot in (0,1,3,4):
                 self.actor(slot)
                 self.contract.vote_agreement(rid,True)
@@ -739,13 +901,22 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract.adjudicate_appeal(cid)
         self.assertEqual(self.record(self.contract.get_case(cid))['status'],'CLOSED')
 
-    def test_post_cap_and_public_page_bound_are_enforced(self):
+    def test_room_posts_continue_beyond_150_and_pages_are_bounded(self):
         rid=self.room()
         self.actor(0)
-        for _ in range(150):
-            self.contract.publish_post(rid,0,POST)
-        with self.assertRaisesRegex(UserError,'post cap'):
-            self.contract.publish_post(rid,0,POST)
+        ids=[self.contract.publish_post(rid,0,POST) for _ in range(300)]
+        self.assertEqual(ids[0],1)
+        self.assertEqual(ids[149],150)
+        self.assertEqual(ids[-1],300)
+        first=self.record(self.contract.list_posts(rid,0,20))
+        middle=self.record(self.contract.list_posts(rid,140,20))
+        last=self.record(self.contract.list_posts(rid,280,20))
+        self.assertEqual([p['id'] for p in first],[*range(1,21)])
+        self.assertEqual([p['id'] for p in middle],[*range(141,161)])
+        self.assertEqual([p['id'] for p in last],[*range(281,301)])
+        self.assertEqual(self.record(self.contract.list_posts(rid,300,20)),[])
+        with self.assertRaisesRegex(UserError,'invalid post cursor'):
+            self.contract.list_posts(rid,301,20)
         with self.assertRaisesRegex(UserError,'page size'):
             self.contract.list_posts(rid,0,21)
 
