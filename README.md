@@ -27,11 +27,11 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
-| Vercel deployment | [READY production deployment](https://vercel.com/delealufejoel-4184s-projects/crossrule/72Ew7NJTAUTKmx1VvoDmE1RoagcE) (`dpl_72Ew7NJTAUTKmx1VvoDmE1RoagcE`), uploaded by CLI from the corrected source checkout |
+| Vercel deployment | [READY production deployment](https://vercel.com/delealufejoel-4184s-projects/crossrule/72LgnJ16xeF3eGiwpvdBXajxp19F) (`dpl_72LgnJ16xeF3eGiwpvdBXajxp19F`), uploaded by CLI from the final frontend checkout |
 | Contract | `0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608` |
 | Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608) |
 | Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0) |
-| Latest full GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40588705408) at `4b5f8ea16722c713c2163219c044f000e02b743e` |
+| Latest full GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40598385068) at `65b8d69716790bd67375fa164114bb9323066e2c` |
 | Source | SHA-256 `2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b`, commit `4b5f8ea16722c713c2163219c044f000e02b743e` |
 | Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (47,060 bytes) |
 

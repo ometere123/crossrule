@@ -21,8 +21,8 @@ This is the final corrected deployment record. It supersedes the older deploymen
 | Contract source | 47,060 LF bytes; SHA-256 2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b |
 | Deployed source | 47,060 decoded bytes; SHA-256 2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b |
 | Exact parity | byteEqual: true, checked by scripts/verify_deployed_source.mjs with gen_getContractCode |
-| CI for implementation commit | [run 40588705408](https://github.com/ometere123/crossrule/actions/runs/40588705408), success, 9/9 jobs |
-| Production frontend | https://crossrule.vercel.app, READY deployment dpl_72Ew7NJTAUTKmx1VvoDmE1RoagcE; the public alias returned HTTP 200 and read the new contract's empty initial state before the lifecycle |
+| CI for final pushed code | [run 40598385068](https://github.com/ometere123/crossrule/actions/runs/40598385068), success, 9/9 jobs |
+| Production frontend | https://crossrule.vercel.app, READY deployment dpl_72LgnJ16xeF3eGiwpvdBXajxp19F; the public alias returned HTTP 200 and reads the corrected contract's live lifecycle state |
 
 The deployed-source SHA is intentionally recorded twice only as a provenance check: the repository file and decoded StudioNet response are byte-for-byte equal. The exact verification command was:
 

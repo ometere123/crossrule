@@ -23,7 +23,7 @@ This document is the operational handoff for the verified source, StudioNet depl
 * Deployment transaction: [`0x6896ffebe…db6c0`](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0)
 * Deployment result: `FINALIZED`, `MAJORITY_AGREE`, leader `SUCCESS`
 * Frontend: [https://crossrule.vercel.app](https://crossrule.vercel.app)
-* Vercel deployment: [READY `dpl_72Ew7NJTAUTKmx1VvoDmE1RoagcE`](https://vercel.com/delealufejoel-4184s-projects/crossrule/72Ew7NJTAUTKmx1VvoDmE1RoagcE), built from the corrected source checkout
+* Vercel deployment: [READY `dpl_72LgnJ16xeF3eGiwpvdBXajxp19F`](https://vercel.com/delealufejoel-4184s-projects/crossrule/72LgnJ16xeF3eGiwpvdBXajxp19F), built from the final frontend checkout
 * Source parity: `gen_getContractCode` returned 47,060 bytes that matched `contracts/Crossrule.py` byte-for-byte; SHA-256 `2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b`
 * Deployed contract source commit: `4b5f8ea16722c713c2163219c044f000e02b743e`
 * Full ledger: [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)

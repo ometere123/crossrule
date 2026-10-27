@@ -43,7 +43,7 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Latest full CI for the implementation commit: [run 40588705408](https://github.com/ometere123/crossrule/actions/runs/40588705408), successful 9/9 jobs at `4b5f8ea16722c713c2163219c044f000e02b743e`
+* Latest full CI for the final pushed code: [run 40598385068](https://github.com/ometere123/crossrule/actions/runs/40598385068), successful 9/9 jobs at `65b8d69716790bd67375fa164114bb9323066e2c`
 
 ## Production UI evidence
 
