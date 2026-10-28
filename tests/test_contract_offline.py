@@ -90,6 +90,10 @@ CLAUSES = json.dumps([
     {'id':'PROMO','text':'No unsolicited sales pitches; contextual technical links are allowed.','max_severity':'SERIOUS'},
     {'id':'EVIDENCE','text':'Material technical assertions require support.','max_severity':'MINOR'},
 ])
+SIX_CLAUSES = json.dumps([
+    {'id':f'C{i}', 'text':f'Clause {i} governs the synthetic demonstration room.', 'max_severity':'MINOR'}
+    for i in range(1, 7)
+])
 
 
 def finding(label='NO_VIOLATION', clause='PROMO', anchor='20-contract benchmark includes seeded flaws'):
@@ -102,6 +106,7 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract = module.Crossrule()
         self.contract.communities, self.contract.rooms = FakeTreeMap(), FakeTreeMap()
         self.contract.posts, self.contract.cases, self.contract.restrictions = FakeTreeMap(), FakeTreeMap(), FakeTreeMap()
+        self.contract.restriction_scope_index = FakeTreeMap()
         self.contract.restriction_until_index = FakeTreeMap()
         self.contract.room_post_index = FakeTreeMap()
         self.contract.community_partner_index = FakeTreeMap()
@@ -133,16 +138,16 @@ class CrossruleLifecycle(unittest.TestCase):
             self.contract.accept_foundership(cb)
         return ca,cb
 
-    def proposal(self, suspension=5):
+    def proposal(self, suspension=5, clauses=CLAUSES):
         ca,cb=self.create_communities()
         self.actor(0)
-        rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',CLAUSES,5,5,5,suspension)
+        rid=self.contract.propose_room(ca,cb,'Joint evidence and promotion standards.',clauses,5,5,5,suspension)
         self.actor(3)
         self.contract.consent_room(rid)
         return ca,cb,rid
 
-    def room(self, suspension=5):
-        ca,cb,rid=self.proposal(suspension)
+    def room(self, suspension=5, clauses=CLAUSES):
+        ca,cb,rid=self.proposal(suspension, clauses)
         for slot in (0,1,3,4):
             self.actor(slot)
             self.contract.vote_agreement(rid,True)
@@ -619,6 +624,86 @@ class CrossruleLifecycle(unittest.TestCase):
         self.assertEqual(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'],[])
         self.assertEqual(self.record(self.contract.get_case(cid))['original_finding'],'SERIOUS_BREACH')
 
+    def test_expired_appealed_sanction_survives_case_b_pruning_without_restart(self):
+        # Case A is serious, then its original restriction expires while its
+        # appeal remains open.  Case B is adjudicated in the same room and
+        # prunes A from the current index.  Upholding A's appeal must not
+        # recreate A's restriction from the appellate timestamp.
+        rid, pid_a, case_a = self.frozen_case(suspension=2)
+        self.mock(finding('SERIOUS_BREACH'), finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_case(case_a)
+        first_expiry = self.record(self.contract.get_case(case_a))['sanction_until']
+        self.actor(0)
+        self.contract.open_appeal(case_a, 'Reconsider the frozen technical context.')
+
+        self.clock = first_expiry + 1
+        self.actor(0)
+        pid_b = self.contract.publish_post(rid, 0, POST)
+        self.actor(3)
+        case_b = self.contract.open_case(pid_b, 'PROMO', 'A second independent case.', '[]')
+        self.clock = self.record(self.contract.get_case(case_b))['defense_due'] + 1
+        self.contract.freeze_case(case_b)
+        self.mock(finding('SERIOUS_BREACH'), finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_case(case_b)
+        self.assertNotIn(case_a, [entry['case_id'] for entry in self.record(self.contract.get_restriction(rid, self.wallets[0]))['entries']])
+
+        self.clock = self.record(self.contract.get_case(case_a))['appeal']['response_due'] + 1
+        self.contract.freeze_appeal(case_a)
+        self.mock(finding('SERIOUS_BREACH'), finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_appeal(case_a)
+        final_a = self.record(self.contract.get_case(case_a))
+        self.assertEqual(final_a['finding'], 'SERIOUS_BREACH')
+        self.assertEqual(final_a['sanction_until'], first_expiry)
+        current = self.record(self.contract.get_restriction(rid, self.wallets[0]))
+        self.assertTrue(current['suspended'])
+        self.assertNotIn(case_a, [entry['case_id'] for entry in current['entries']])
+        self.assertIn(case_b, [entry['case_id'] for entry in current['entries']])
+
+    def test_six_clause_policy_allows_one_serial_case_per_publication_clause(self):
+        rid = self.room(clauses=SIX_CLAUSES)
+        self.actor(0)
+        pid = self.contract.publish_post(rid, 0, POST)
+        clauses = [f'C{i}' for i in range(1, 7)]
+        cases = []
+        for index, clause in enumerate(clauses):
+            self.actor(3 if index % 2 == 0 else 4)
+            cid = self.contract.open_case(pid, clause, f'Clause {clause} challenge.', '[]')
+            cases.append(cid)
+            self.clock = self.record(self.contract.get_case(cid))['defense_due'] + 1
+            self.contract.freeze_case(cid)
+            self.mock(finding('NO_VIOLATION', clause), finding('NO_VIOLATION', clause))
+            self.contract.adjudicate_case(cid)
+            self.clock = self.record(self.contract.get_case(cid))['appeal_due'] + 1
+            self.contract.close_case(cid)
+        self.assertEqual(self.record(self.contract.get_post(pid))['challenged_clauses'], clauses)
+        self.actor(3)
+        with self.assertRaisesRegex(UserError, 'unknown clause'):
+            self.contract.open_case(pid, 'C7', 'There is no seventh publication-time clause.', '[]')
+        with self.assertRaisesRegex(UserError, 'already been challenged under this clause'):
+            self.contract.open_case(pid, 'C1', 'Duplicate clause attempt.', '[]')
+
+    def test_publication_policy_never_allows_more_than_six_distinct_cases(self):
+        rid = self.room(clauses=SIX_CLAUSES)
+        self.actor(0)
+        pid = self.contract.publish_post(rid, 0, POST)
+        for index in range(1, 7):
+            self.actor(3)
+            cid = self.contract.open_case(pid, f'C{index}', f'Clause C{index} challenge.', '[]')
+            self.clock = self.record(self.contract.get_case(cid))['defense_due'] + 1
+            self.contract.freeze_case(cid)
+            self.mock(finding('NO_VIOLATION', f'C{index}'), finding('NO_VIOLATION', f'C{index}'))
+            self.contract.adjudicate_case(cid)
+            self.clock = self.record(self.contract.get_case(cid))['appeal_due'] + 1
+            self.contract.close_case(cid)
+        # This simulates a malformed legacy snapshot with an extra clause. The
+        # global six-clause ceiling must still prevent a seventh proceeding.
+        post = self.record(self.contract.get_post(pid))
+        post['policy']['clauses'].append({'id': 'C7', 'text': 'not reachable through a valid policy', 'max_severity': 'MINOR'})
+        self.contract._save(self.contract.posts, pid, post)
+        self.actor(3)
+        with self.assertRaisesRegex(UserError, 'post challenge limit reached'):
+            self.contract.open_case(pid, 'C7', 'Seventh clause attempt.', '[]')
+
     def test_releasing_reservation_removes_conflict_for_member_admitted_during_vote(self):
         ca,cb,rid=self.proposal()
         self.actor(0)
@@ -765,14 +850,28 @@ class CrossruleLifecycle(unittest.TestCase):
     def test_restriction_index_accepts_more_than_32_current_cases(self):
         rid,_,cid=self.frozen_case(suspension=10)
         key=self.contract._restriction_key(rid,self.wallets[0])
-        seeded=[{'case_id':1000+i,'until':self.clock+600+i} for i in range(32)]
-        self.contract.restrictions[key]=self.contract._dump(seeded)
+        for i in range(32):
+            self.contract._insert_restriction(key,1000+i,self.clock+600+i)
         self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
         self.contract.adjudicate_case(cid)
         current=self.record(self.contract.get_restriction(rid,self.wallets[0]))
         self.assertTrue(current['suspended'])
         self.assertEqual(len(current['entries']),33)
         self.assertEqual(current['entries'][-1]['case_id'],cid)
+
+    def test_restriction_index_prunes_a_large_current_set_without_case_history_scan(self):
+        rid,_,cid=self.frozen_case(suspension=10)
+        key=self.contract._restriction_key(rid,self.wallets[0])
+        for i in range(120):
+            self.contract._insert_restriction(key,2000+i,self.clock+600+i)
+        self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_case(cid)
+        self.assertEqual(len(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries']),121)
+        self.clock += 1000
+        self.actor(0)
+        self.assertFalse(self.contract._restricted(rid,self.wallets[0]))
+        self.contract._prune_restrictions(key,self.clock)
+        self.assertEqual(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'],[])
 
     def test_current_restriction_lookup_does_not_read_case_history(self):
         rid,pid,cid=self.frozen_case()

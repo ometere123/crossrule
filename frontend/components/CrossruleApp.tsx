@@ -4,7 +4,7 @@ import {ArrowRight,ArrowLeft,BookOpen,CheckCircle2,Handshake,Plus,RefreshCw,Scal
 import AppShell,{type Screen} from './AppShell';
 import LandingPage from './LandingPage';
 import {Empty,Field,Panel,SelectField,Status} from './Forms';
-import {actionFingerprint,connectedWallet,connectWallet,disconnectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,reconcileTransactions,rememberObservation,transactionUrl,unresolvedTransactions,write,type TransactionObservation} from '@/lib/chain';
+import {actionFingerprint,connectedWallet,connectWallet,disconnectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,reconcileTransactions,rememberObservation,transactionStorageReady,transactionUrl,unresolvedTransactions,write,type TransactionObservation} from '@/lib/chain';
 import {EMPTY_COUNTS,formatTime,policyOf,sampleClauses,secondsLeft,threshold,truncate,type Case,type CaseListItem,type Community,type CommunityListItem,type Counts,type CrossrulePost,type Room,type RoomListItem} from '@/lib/types';
 
 type FormState=Record<string,string>;
@@ -76,7 +76,9 @@ function validateWrite(method:string,args:unknown[]) {
 function txLabel(observation:TransactionObservation|undefined) {
   if(!observation)return 'Submitted — inspect finality';
   if(!observation.finalized)return `Protocol ${observation.statusName}`;
-  return observation.successful?'Finalized · execution succeeded':'Finalized · execution failed';
+  if(observation.outcome==='SUCCESS')return 'Finalized · execution succeeded';
+  if(observation.outcome==='FAILED')return 'Finalized · execution failed';
+  return 'Finalized · outcome still unknown';
 }
 
 export default function CrossruleApp(){
@@ -110,22 +112,28 @@ export default function CrossruleApp(){
   const [postOffset,setPostOffset]=useState(0);
   const [now,setNow]=useState(0);
   const selectionRef=useRef(0);
+  const refreshGenerationRef=useRef(0);
   const value=(key:string)=>form[key]??'';
   const change=(key:string,val:string)=>setForm(prev=>({...prev,[key]:val}));
-  const open=(next:Screen)=>{selectionRef.current+=1;setScreen(next);setError('');setNotice('');window.scrollTo({top:0,behavior:'smooth'});};
+  // Route changes must settle synchronously so touch users do not have a
+  // moving panel intercept the first control they activate after navigation.
+  const open=(next:Screen)=>{selectionRef.current+=1;setScreen(next);setError('');setNotice('');window.scrollTo({top:0,behavior:'auto'});};
   const enterApplication=(next:Extract<Screen,'overview'|'communities'|'create'|'rooms'|'cases'|'audit'>='overview')=>{setLanding(false);open(next);};
 
   const refresh=useCallback(async()=>{
     if(!isConfigured)return;
+    const generation=++refreshGenerationRef.current;
     setLoading(true);
     try{
       const c=await readJson<Counts>('get_counts');
+      if(generation!==refreshGenerationRef.current)return;
       setCounts(c);
       const [communityList,roomList,caseList]=await Promise.all([
         c.communities?readJson<CommunityListItem[]>('list_communities',[Math.max(1,c.communities-19),Math.min(20,c.communities)]):Promise.resolve([]),
         c.rooms?readJson<RoomListItem[]>('list_rooms',[Math.max(1,c.rooms-19),Math.min(20,c.rooms)]):Promise.resolve([]),
         c.cases?readJson<CaseListItem[]>('list_cases',[Math.max(1,c.cases-19),Math.min(20,c.cases)]):Promise.resolve([])
       ]);
+      if(generation!==refreshGenerationRef.current)return;
       setCommunities(communityList.reverse());setRooms(roomList.reverse());setCases(caseList.reverse());
     }catch(e){setError(e instanceof Error?e.message:String(e));}
     finally{setLoading(false);}
@@ -139,7 +147,7 @@ export default function CrossruleApp(){
       setRecoveryReady(false);
       try{
         await reconcileTransactions(wallet||undefined);
-        const items=recentTransactions().slice(0,20);
+        const items=recentTransactions();
         const observations=await Promise.all(items.map(async item=>{
           try{return await inspectTransaction(item.hash);}catch{return item.lastObservation??null;}
         }));
@@ -149,7 +157,7 @@ export default function CrossruleApp(){
           observations.forEach(observation=>{if(observation)next[observation.hash]=observation;});
           return next;
         });
-      }finally{if(alive)setRecoveryReady(true);}
+      }finally{if(alive)setRecoveryReady(transactionStorageReady());}
     };
     void load();
     const refreshFromOtherTab=()=>{void load();};
@@ -241,7 +249,12 @@ export default function CrossruleApp(){
         await refresh();
         if(selection!==selectionRef.current)return hash;
         if(community){const next=await readJson<Community>('get_community',[community.id]);setCommunity(next);}
-        if(room){const next=await readJson<Room>('get_room',[room.id]);setRoom(next);}
+        if(room){
+          const next=await readJson<Room>('get_room',[room.id]);
+          setRoom(next);
+          const nextPosts=await readJson<CrossrulePost[]>('list_posts',[room.id,postOffset,20]);
+          setRoomPosts(nextPosts);
+        }
         if(post){const next=await readJson<CrossrulePost>('get_post',[post.id]);setPost(next);}
         if(caseFile){const next=await readJson<Case>('get_case',[caseFile.id]);setCaseFile(next);}
       }catch(e){setError(`The transaction succeeded, but the follow-up read failed: ${e instanceof Error?e.message:String(e)}`);}
@@ -249,7 +262,7 @@ export default function CrossruleApp(){
     }catch(e){
       const message=e instanceof Error?e.message:String(e);
       if(submittedHash){
-        const executionFailed=message.includes('finalized without successful execution');
+        const executionFailed=message.includes('finalized with failed contract execution');
         setTxState(executionFailed?'failed':'unknown');
         setError(executionFailed?message:`Transaction ${submittedHash} was submitted, but its final outcome could not be confirmed. Do not resubmit; inspect its status first.`);
       }else{setTxState('failed');setError(message);}
@@ -275,7 +288,7 @@ export default function CrossruleApp(){
       rememberObservation(tx,observation);
       setTxObservation(observation);setTxHistory(prev=>({...prev,[tx]:observation}));
       if(observation.successful){setTxState('success');setNotice('Transaction finalized with successful execution.');await refresh();}
-      else if(observation.finalized){setTxState('failed');setError('Transaction finalized, but contract execution failed. No state change should be assumed.');}
+      else if(observation.outcome==='FAILED'){setTxState('failed');setError('Transaction finalized, but contract execution failed. No state change should be assumed.');}
       else{setTxState('unknown');setNotice(`Transaction is still ${observation.statusName}. Do not submit a duplicate.`);}
     }catch(e){setError(`Could not inspect transaction status: ${e instanceof Error?e.message:String(e)}`);}
     finally{setLoading(false);}
@@ -360,7 +373,7 @@ export default function CrossruleApp(){
   const activeCaseId=post?.active_case_id??(post?.status==='UNDER_REVIEW'?post.case_id:0);
   const challengeIds=post?.challenge_ids??(post?.case_id?[post.case_id]:[]);
   const challengedClauses=post?.challenged_clauses??[];
-  const challengeEligible=Boolean(post&&activeCaseId===0&&challengeIds.length<3&&roomMember&&walletKey&&post.author.toLowerCase()!==walletKey&&value('clause')&&!challengedClauses.includes(value('clause')));
+  const challengeEligible=Boolean(post&&activeCaseId===0&&post.status!=='HIDDEN'&&challengeIds.length<(postPolicy?.clauses.length??0)&&roomMember&&walletKey&&post.author.toLowerCase()!==walletKey&&value('clause')&&!challengedClauses.includes(value('clause')));
   const appealEligible=Boolean(caseFile&&caseFile.status==='DECIDED'&&!caseFile.appeal&&walletKey&&((['MINOR_BREACH','SERIOUS_BREACH'] as string[]).includes(caseFile.finding)?caseFile.author.toLowerCase()===walletKey:caseFile.reporter.toLowerCase()===walletKey));
   const responseEligible=Boolean(caseFile?.status==='APPEAL_OPEN'&&caseFile.appeal&&walletKey&&((caseFile.appeal.appellant.toLowerCase()===caseFile.author.toLowerCase()?caseFile.reporter:caseFile.author).toLowerCase()===walletKey)&&!caseFile.appeal.response_submitted);
 
@@ -527,7 +540,7 @@ export default function CrossruleApp(){
           <Field label="Your evidence-grounded allegation" value={value('allegation')} onChange={v=>change('allegation',v)} rows={6} max={1200}/>
           <Field label="Context post IDs (comma separated, up to 3)" value={value('context')} onChange={v=>change('context',v)} placeholder="12, 13" help="Only earlier posts within this room; their original text is frozen with the case."/>
           {act('open_case',[post.id,value('clause'),value('allegation'),JSON.stringify(value('context').trim()?value('context').split(',').map(s=>asNumber(s.trim())):[])],'Submit rule challenge',challengeEligible)}
-          <p className="footnote">This post may have up to three clause-specific challenges, one at a time. A clause cannot be reported twice. A later challenge is allowed only after an earlier case closes without an upheld breach; a restored post still needs a fresh bilateral feature vote.</p>
+          <p className="footnote">This post may have one serial challenge per clause in its publication-time policy (up to six). A clause cannot be reported twice, unresolved cases block the next clause, and an upheld breach ends further proceedings. Restoration does not silently restore a previous feature endorsement.</p>
         </>}
       </Panel></div>
     </>}

@@ -320,6 +320,46 @@ def test_frozen_post_case_consensus_and_appeal(direct_deploy, direct_vm, direct_
     assert record["finding"] == "NO_VIOLATION"
 
 
+def test_expired_appeal_sanction_is_not_restarted_after_interleaved_case(direct_deploy, direct_vm, direct_accounts):
+    direct_vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    rid = ratified_room(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    first_post = contract.publish_post(rid, 0, TEXT)
+    direct_vm.sender = direct_accounts[3]
+    first_case = contract.open_case(first_post, "PROMO", "First serious case", "[]")
+    direct_vm.warp("2026-10-26T12:03:00+00:00")
+    contract.freeze_case(first_case)
+    serious = json.dumps({"finding": "SERIOUS_BREACH", "clause_id": "PROMO",
+        "anchor": "20-contract benchmark includes seeded flaws",
+        "reason": "The frozen publication supports a serious breach under the ratified clause."})
+    direct_vm.mock_llm(r"You interpret a JOINTLY RATIFIED", serious)
+    contract.adjudicate_case(first_case)
+    first_expiry = parsed(contract.get_case(first_case))["sanction_until"]
+    direct_vm.sender = direct_accounts[0]
+    contract.open_appeal(first_case, "The evidence should be reconsidered.")
+
+    direct_vm.warp("2026-10-26T12:06:00+00:00")
+    direct_vm.sender = direct_accounts[0]
+    second_post = contract.publish_post(rid, 0, TEXT)
+    direct_vm.sender = direct_accounts[3]
+    second_case = contract.open_case(second_post, "PROMO", "Second independent serious case", "[]")
+    direct_vm.warp("2026-10-26T12:09:00+00:00")
+    contract.freeze_case(second_case)
+    direct_vm.clear_mocks()
+    direct_vm.mock_llm(r"You interpret a JOINTLY RATIFIED", serious)
+    contract.adjudicate_case(second_case)
+    assert first_case not in [entry["case_id"] for entry in parsed(contract.get_restriction(rid, wallet(direct_accounts[0])))['entries']]
+
+    contract.freeze_appeal(first_case)
+    direct_vm.clear_mocks()
+    direct_vm.mock_llm(r"You interpret a JOINTLY RATIFIED", serious)
+    contract.adjudicate_appeal(first_case)
+    final_case = parsed(contract.get_case(first_case))
+    assert final_case["sanction_until"] == first_expiry
+    assert second_case in [entry["case_id"] for entry in parsed(contract.get_restriction(rid, wallet(direct_accounts[0])))['entries']]
+
+
 def test_validator_rejects_classification_disagreement(direct_deploy, direct_vm, direct_accounts):
     vm = direct_vm
     vm.warp("2026-10-26T12:00:00+00:00")

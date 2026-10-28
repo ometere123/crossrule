@@ -15,10 +15,10 @@ MAX_HISTORY = 64
 MAX_PENDING_ROOM_PROPOSALS = 32
 MAX_CURRENT_PARTNERS = 64
 MAX_PAIR_RESERVATIONS = 32
-# This is a policy bound, not a cap on the number of independently recorded
-# sanctions.  Current sanctions are pruned from the per-room/per-wallet index
-# as they expire; the immutable case history remains in `cases`.
-MAX_CHALLENGES_PER_POST = 3
+# The policy schema itself is the challenge bound.  A post may be challenged
+# once for each distinct clause in the immutable publication-time policy, but
+# never for more than the six clauses the contract accepts.
+MAX_POLICY_CLAUSES = 6
 MAX_LONG_ANCHOR_BYTES = 8
 MAX_PAGE_SIZE = 20
 
@@ -136,7 +136,11 @@ class Crossrule(gl.Contract):
     rooms: TreeMap[u32, str]
     posts: TreeMap[u32, str]
     cases: TreeMap[u32, str]
+    # `restrictions` stores one node per currently active case.  The nodes are
+    # linked by scope (room + wallet) and ordered by expiry, so active
+    # sanctions do not require rewriting an ever-growing historical array.
     restrictions: TreeMap[str, str]
+    restriction_scope_index: TreeMap[str, str]
     restriction_until_index: TreeMap[str, str]
     room_post_index: TreeMap[str, str]
     community_partner_index: TreeMap[str, str]
@@ -679,6 +683,127 @@ class Crossrule(gl.Contract):
     def _restriction_key(self, room_id, wallet):
         return f"{room_id}:{wallet}"
 
+    def _restriction_node_key(self, scope, case_id):
+        return f"{scope}|{int(case_id)}"
+
+    def _restriction_meta(self, scope):
+        raw = self.restriction_scope_index.get(scope, "")
+        if not raw:
+            return {"head": 0, "count": 0}
+        meta = json.loads(raw)
+        self._require(isinstance(meta, dict) and set(meta) == {"head", "count"},
+                      "restriction scope index corrupted")
+        self._require(type(meta["head"]) is int and type(meta["count"]) is int and
+                      meta["head"] >= 0 and meta["count"] >= 0,
+                      "restriction scope index corrupted")
+        return meta
+
+    def _restriction_node(self, scope, case_id):
+        raw = self.restrictions.get(self._restriction_node_key(scope, case_id), "")
+        if not raw:
+            return None
+        node = json.loads(raw)
+        self._require(isinstance(node, dict) and
+                      set(node) == {"case_id", "until", "prev", "next"},
+                      "restriction node corrupted")
+        self._require(type(node["case_id"]) is int and type(node["until"]) is int and
+                      type(node["prev"]) is int and type(node["next"]) is int and
+                      node["case_id"] > 0 and node["until"] > 0 and
+                      node["prev"] >= 0 and node["next"] >= 0,
+                      "restriction node corrupted")
+        return node
+
+    def _refresh_restriction_index(self, scope):
+        meta = self._restriction_meta(scope)
+        if not meta["head"]:
+            self.restriction_until_index[scope] = "0"
+            return
+        head = self._restriction_node(scope, meta["head"])
+        self._require(head is not None, "restriction head missing")
+        self.restriction_until_index[scope] = str(int(head["until"]))
+
+    def _unlink_restriction(self, scope, case_id):
+        node = self._restriction_node(scope, case_id)
+        if node is None:
+            return
+        meta = self._restriction_meta(scope)
+        prev_id, next_id = int(node["prev"]), int(node["next"])
+        if prev_id:
+            previous = self._restriction_node(scope, prev_id)
+            self._require(previous is not None, "restriction previous node missing")
+            previous["next"] = next_id
+            self.restrictions[self._restriction_node_key(scope, prev_id)] = self._dump(previous)
+        else:
+            self._require(meta["head"] == int(case_id), "restriction head mismatch")
+            meta["head"] = next_id
+        if next_id:
+            following = self._restriction_node(scope, next_id)
+            self._require(following is not None, "restriction next node missing")
+            following["prev"] = prev_id
+            self.restrictions[self._restriction_node_key(scope, next_id)] = self._dump(following)
+        self._require(meta["count"] > 0, "restriction count underflow")
+        meta["count"] -= 1
+        if meta["count"] == 0:
+            meta["head"] = 0
+        self.restriction_scope_index[scope] = self._dump(meta)
+        del self.restrictions[self._restriction_node_key(scope, case_id)]
+        self._refresh_restriction_index(scope)
+
+    def _prune_restrictions(self, scope, now):
+        """Remove expired nodes from the head of the expiry-ordered index.
+
+        Nodes are ordered from latest expiry to earliest expiry.  Therefore an
+        unexpired head proves that every later node is still active, and an
+        expired head means the remaining tail can be removed without scanning
+        immutable case history.  The loop is bounded by currently live
+        sanctions in this room/wallet scope, not by the number of old cases.
+        """
+        meta = self._restriction_meta(scope)
+        current = int(meta["head"])
+        while current:
+            node = self._restriction_node(scope, current)
+            self._require(node is not None, "restriction head missing")
+            if int(node["until"]) > int(now):
+                break
+            next_id = int(node["next"])
+            self._unlink_restriction(scope, current)
+            current = next_id
+        self._refresh_restriction_index(scope)
+
+    def _insert_restriction(self, scope, case_id, until):
+        now = self._now()
+        self._prune_restrictions(scope, now)
+        self._unlink_restriction(scope, case_id)
+        meta = self._restriction_meta(scope)
+        current = int(meta["head"])
+        previous_id = 0
+        # Descending expiry order makes the current maximum a direct head
+        # lookup and keeps expiry pruning independent of historical cases.
+        while current:
+            node = self._restriction_node(scope, current)
+            self._require(node is not None, "restriction node missing")
+            if int(node["until"]) < int(until):
+                break
+            previous_id, current = current, int(node["next"])
+        node = {"case_id": int(case_id), "until": int(until),
+                "prev": int(previous_id), "next": int(current)}
+        self.restrictions[self._restriction_node_key(scope, case_id)] = self._dump(node)
+        if previous_id:
+            previous = self._restriction_node(scope, previous_id)
+            self._require(previous is not None, "restriction previous node missing")
+            previous["next"] = int(case_id)
+            self.restrictions[self._restriction_node_key(scope, previous_id)] = self._dump(previous)
+        else:
+            meta["head"] = int(case_id)
+        if current:
+            following = self._restriction_node(scope, current)
+            self._require(following is not None, "restriction next node missing")
+            following["prev"] = int(case_id)
+            self.restrictions[self._restriction_node_key(scope, current)] = self._dump(following)
+        meta["count"] += 1
+        self.restriction_scope_index[scope] = self._dump(meta)
+        self._refresh_restriction_index(scope)
+
     def _restricted(self, room_id, wallet):
         # The current maximum expiry is a direct lookup. Historical case
         # records remain immutable in `cases`, while posting eligibility does
@@ -721,8 +846,6 @@ class Crossrule(gl.Contract):
         self._require(self._in_room(room, actor) and actor != post["author"], "other room member required")
         challenge_ids = list(post.get("challenge_ids", []))
         challenged_clauses = list(post.get("challenged_clauses", []))
-        self._require(len(challenge_ids) < MAX_CHALLENGES_PER_POST,
-                      "post challenge limit reached")
         self._require(clause_id not in challenged_clauses,
                       "post has already been challenged under this clause")
         # A terminal upheld breach is final for this publication.  A later
@@ -743,6 +866,12 @@ class Crossrule(gl.Contract):
         self._require(isinstance(policy, dict) and int(post.get("policy_version", 0)) > 0,
                       "post policy snapshot missing")
         self._require(any(x["id"] == clause_id for x in policy["clauses"]), "unknown clause")
+        # The immutable publication-time policy determines the bounded number
+        # of distinct clause proceedings.  A later amendment cannot create
+        # new offenses or expand an older post's challenge capacity.
+        max_challenges = min(MAX_POLICY_CLAUSES, len(policy["clauses"]))
+        self._require(len(challenge_ids) < max_challenges,
+                      "post challenge limit reached")
         if isinstance(context_json, str):
             bounded(context_json, 120, "context JSON")
             try:
@@ -770,7 +899,11 @@ class Crossrule(gl.Contract):
             "opened_at": self._now(), "defense_due": self._now() + policy["defense_minutes"] * 60,
             "status": "OPEN", "digest": "", "finding": "", "decision": None,
             "original_finding": "", "original_decision": None,
-            "appeal_due": 0, "appeal": None})
+            "appeal_due": 0, "appeal": None,
+            # Authoritative first-imposition timestamp for a serious sanction.
+            # It survives expiry-index pruning and is never recomputed when an
+            # appeal later reaffirms the same case.
+            "sanction_until": 0})
         challenge_ids.append(int(cid))
         challenged_clauses.append(clause_id)
         post["case_id"], post["active_case_id"] = int(cid), int(cid)
@@ -827,22 +960,23 @@ class Crossrule(gl.Contract):
         if post["status"] == "HIDDEN" and room["featured_post"] == post["id"]:
             room["featured_post"] = 0
         key = self._restriction_key(case["room_id"], case["author"])
-        raw = self.restrictions.get(key, "")
-        previous = json.loads(raw) if raw else []
-        existing = next((r for r in previous if r["case_id"] == case["id"]), None)
-        self._require(isinstance(previous, list), "restriction index corrupted")
-        previous = [r for r in previous
-                    if r["case_id"] != case["id"] and r["until"] > self._now()]
+        now = self._now()
+        self._prune_restrictions(key, now)
+        # Remove only this case's current node. Other live cases remain
+        # authoritative and continue to contribute to the effective maximum.
+        self._unlink_restriction(key, case["id"])
         if finding == "SERIOUS_BREACH":
-            until = (existing["until"] if existing else
-                     self._now() + case["policy"]["suspension_minutes"] * 60)
-            if until > self._now():
-                previous.append({"case_id": case["id"], "until": until})
-        self.restrictions[key] = self._dump(previous)
-        maximum = 0
-        for item in previous:
-            maximum = max(maximum, int(item["until"]))
-        self.restriction_until_index[key] = str(maximum)
+            until = int(case.get("sanction_until", 0))
+            if until <= 0:
+                # This is either the initial serious finding or an appellate
+                # severity change from a non-breach finding. Only that first
+                # serious transition starts a clock.
+                until = now + case["policy"]["suspension_minutes"] * 60
+                case["sanction_until"] = until
+            if until > now:
+                self._insert_restriction(key, case["id"], until)
+        else:
+            self._refresh_restriction_index(key)
         self._save(self.posts, u32(case["post_id"]), post)
         self._save(self.rooms, u32(case["room_id"]), room)
 
@@ -947,11 +1081,19 @@ class Crossrule(gl.Contract):
     def get_restriction(self, rid: u32, wallet: str) -> str:
         addr = self._address(wallet)
         now = self._now()
-        entries = [item for item in json.loads(
-            self.restrictions.get(self._restriction_key(int(rid), addr), "[]"))
-                   if item["until"] > now]
+        scope = self._restriction_key(int(rid), addr)
+        meta = self._restriction_meta(scope)
+        entries = []
+        current = int(meta["head"])
+        while current:
+            node = self._restriction_node(scope, current)
+            self._require(node is not None, "restriction node missing")
+            if int(node["until"]) <= now:
+                break
+            entries.append({"case_id": int(node["case_id"]), "until": int(node["until"])})
+            current = int(node["next"])
         return self._dump({"suspended": self._restricted(int(rid), addr),
-            "entries": entries})
+                           "entries": entries})
 
     @gl.public.view
     def list_communities(self, start: u32, count: u8) -> str:

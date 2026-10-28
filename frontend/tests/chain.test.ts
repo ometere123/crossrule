@@ -1,5 +1,5 @@
 import {describe,it,expect} from 'vitest';
-import {actionFingerprint,receiptSucceeded,rememberObservation,rememberTransaction,NETWORK_HEX,NETWORK_ID,transactionUrl,unresolvedTransactions} from '@/lib/chain';
+import {actionFingerprint,classifyReceipt,receiptSucceeded,rememberObservation,rememberTransaction,NETWORK_HEX,NETWORK_ID,transactionStorageReady,transactionUrl,unresolvedTransactions} from '@/lib/chain';
 
 describe('GenLayer signing and receipt safety gates',()=>{
   it('pins the injected wallet to StudioNet chain 61999',()=>{
@@ -25,12 +25,18 @@ describe('GenLayer signing and receipt safety gates',()=>{
     expect(transactionUrl(hash)).toBe(`https://explorer-studio.genlayer.com/tx/${hash}`);
     expect(receiptSucceeded({status:7,result:6,txExecutionResult:1})).toBe(true);
     expect(receiptSucceeded({status:7,result:6,txExecutionResult:2})).toBe(false);
+    expect(receiptSucceeded({status:7,result:1,txExecutionResult:1})).toBe(true);
+    expect(classifyReceipt({status:11,result:1,txExecutionResult:1}).outcome).toBe('PENDING');
+    expect(classifyReceipt({status:13,result:2,txExecutionResult:1}).statusName).toBe('LEADER_REVEALING');
   });
   it('fails safely on contradictory, malformed, or incomplete evidence',()=>{
     expect(receiptSucceeded({statusName:'FINALIZED',resultName:'MAJORITY_DISAGREE',txExecutionResultName:'FINISHED_WITH_RETURN'})).toBe(false);
     expect(receiptSucceeded({statusName:'FINALIZED',resultName:'MAJORITY_AGREE',txExecutionResultName:'FINISHED_WITH_RETURN',tx_execution_result_name:'FINISHED_WITH_ERROR'})).toBe(false);
     expect(receiptSucceeded({status:7,result:99,txExecutionResult:1})).toBe(false);
     expect(receiptSucceeded({status:'FINALIZED',result:'MAJORITY_AGREE',txExecutionResult:'FINISHED_WITH_RETURN'})).toBe(true);
+    expect(receiptSucceeded({status:'Finalized',result:'MajorityAgree',txExecutionResult:'FinishedWithReturn'})).toBe(true);
+    expect(classifyReceipt({statusName:'FINALIZED',resultName:'MAJORITY_AGREE'}).outcome).toBe('UNKNOWN');
+    expect(classifyReceipt({statusName:'FINALIZED',resultName:'MAJORITY_AGREE',txExecutionResultName:'FINISHED_WITH_RETURN',status:6}).outcome).toBe('UNKNOWN');
   });
   it('rehydrates unresolved action protection from browser storage',()=>{
     localStorage.clear();
@@ -46,7 +52,10 @@ describe('GenLayer signing and receipt safety gates',()=>{
   });
   it('fails closed when stored transaction JSON is malformed',()=>{
     localStorage.setItem('crossrule:transactions','{not-json');
+    expect(transactionStorageReady()).toBe(false);
     expect(()=>unresolvedTransactions('0x'+'1'.repeat(40))).not.toThrow();
     expect(unresolvedTransactions('0x'+'1'.repeat(40))).toEqual([]);
+    localStorage.clear();
+    expect(transactionStorageReady()).toBe(true);
   });
 });
