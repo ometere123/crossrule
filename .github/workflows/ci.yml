@@ -105,6 +105,8 @@ jobs:
     name: Public UI browser flow
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS: 0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab
     defaults:
       run:
         working-directory: frontend
