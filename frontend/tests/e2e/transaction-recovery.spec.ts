@@ -1,6 +1,6 @@
 import {test,expect} from '@playwright/test';
 
-const CONTRACT='0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608';
+const CONTRACT='0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab';
 const WALLET='0x'+'2'.repeat(40);
 const HASH='0x'+'c'.repeat(64);
 const args: [string,string,string,string,string,number]=['Recovery Guild','A deterministic recovery test community.','A public test charter.', '0x'+'3'.repeat(40), '0x'+'4'.repeat(40), 5];

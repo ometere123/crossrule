@@ -1,6 +1,80 @@
-# CROSSRULE live evidence ledger
+# CROSSRULE final hardening live evidence ledger
 
-## Current final source-matched deployment and fresh lifecycle
+This top section is the current release record. Earlier sections below are retained and explicitly labelled historical/superseded; they must not be used as evidence for the current address.
+
+## Current source-matched StudioNet deployment
+
+| Field | Observed value |
+| --- | --- |
+| Network | GenLayer StudioNet, chain `61999` |
+| RPC | `https://studio.genlayer.com/api` |
+| CLI / SDK | repository-local `genlayer@0.39.1` / `genlayer-js@1.1.8` |
+| Contract | [0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab](https://explorer-studio.genlayer.com/address/0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab) |
+| Deployment wallet | PRAEST / `0x0d5540e0ad4b92aa0ad4e5f1b8cd645ee1e363e7` |
+| Deployment transaction | [0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468](https://explorer-studio.genlayer.com/tx/0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468) |
+| Deployment result | `FINALIZED`, `MAJORITY_AGREE`, leader `SUCCESS`; validator metadata exposed `AGREE` votes |
+| Deployment timestamp | `2026-10-28T07:14:28.029832+00:00` |
+| Contract-source commit | `21e5af60ac116b31a7d6fa53034a85303f28cecf` |
+| Repository source | 49,865 LF bytes; SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2` |
+| Decoded deployed source | 49,865 bytes; SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2` |
+| Exact parity | `byteEqual: true`, verified by `scripts/verify_deployed_source.mjs` using `gen_getContractCode` |
+| Frontend | [https://crossrule.vercel.app](https://crossrule.vercel.app); final READY deployment ID is added below after the release deployment |
+
+The exact parity command was:
+
+```text
+node scripts/verify_deployed_source.mjs contracts/Crossrule.py 0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab https://studio.genlayer.com/api
+```
+
+Immediate deployment reads were `get_counts = {communities:0, rooms:0, posts:0, cases:0}` and empty community, room and case lists. The source remained unchanged after deployment; the final repository source hash is still the value above.
+
+## Six signing identities
+
+The six encrypted CLI keystores remain preserved locally and were not imported into the browser. No secret material is recorded.
+
+| Role | CLI alias | Public address |
+| --- | --- | --- |
+| A1 | `party_a` | `0xac3ac69dc0bde389256dd6748c75817ead9286d9` |
+| A2 | `walletA` | `0x951e6b75530774ff82321a5ae54e14f778f0c855` |
+| A3 | `walletB` | `0xb845a69860ba4cdf19cfdc5afbaf2e20b6be86b0` |
+| B1 | `conveyance-deployer` | `0x21892bba93381d94037fb4aab01cafbdf4453b56` |
+| B2 | `slash-owner` | `0x9dce0dc7005d6b92e03c27640081096cd36dd468` |
+| B3 | `termsmet-studionet-submitter` | `0xb5ecd6dda36b370aca4af5e2005d8e2ae89c6db2` |
+
+The extra admission applicant was `party_b`, `0xa7eeae0e93793e3146cb14b0700251b8b0ebadfb`.
+
+## Fresh lifecycle on the current contract
+
+All successful rows below were signed by the named CLI identity, finalized on StudioNet, classified from the authoritative receipt and checked against contract readback. Finalized rollback receipts are retained as negative evidence and are not described as rejected signatures.
+
+| Stage | Finalized transaction evidence | Verified result |
+| --- | --- | --- |
+| Community A, `Builders Collective` | create [`0xe652bf52…b934d3aa`](https://explorer-studio.genlayer.com/tx/0xe652bf52f209081b6bf0c436df67b2cf306e7b727182e084749ece18b934d3aa); A2 [`0x6be5c1df…d86f538`](https://explorer-studio.genlayer.com/tx/0x6be5c1df7144f44583f97a7e29c7fa8604f614269f1f84ef1eccd5f70d86f538); A3 [`0x0cb853c5…980a0dd`](https://explorer-studio.genlayer.com/tx/0x0cb853c556dec9b3d5ee1de41f3ce9d2551b81fbd0fbf073a31b10ace980a0dd) | Community 1 `ACTIVE`; three distinct founders |
+| Community B, `Research Forum` | create [`0xcc965a07…876e40ac`](https://explorer-studio.genlayer.com/tx/0xcc965a07497c713404fdb7f85479e27fa673d4789777a88308ad33fe876e40ac); B2 [`0xaeffed6e…b34dd52`](https://explorer-studio.genlayer.com/tx/0xaeffed6e0fb5c522ebf5ac2288cdb23128457b268d01cc89c964443ccb34dd52); B3 [`0xc0f3a7d0…5c867f8`](https://explorer-studio.genlayer.com/tx/0xc0f3a7d0fea1da820b8acb49ab4fab5ca042327d6097f8c7fdb63f08b5c867f8) | Community 2 `ACTIVE`; three distinct founders |
+| Community C, `Evidence Lab` | create [`0x23a47596…d5721`](https://explorer-studio.genlayer.com/tx/0x23a47596b72bccf00a6320b8a9191578eef52122d9fc021a6731155bcd3d5721); A2 [`0x0abcd728…096f3`](https://explorer-studio.genlayer.com/tx/0x0abcd728b2af36ed1887d0ba4f5af0e476eb7d086a8f98280b2418b5645096f3); A3 [`0x377530b0…109a9d`](https://explorer-studio.genlayer.com/tx/0x377530b07935a10cb7c9c3e114c7adb915c6eb1620626f4b2cc0a12f97109a9d) | Community 3 `ACTIVE`; used for current-roster admission/index coverage |
+| Admission and charter | proposal [`0xba5c0b88…fb9e5ad`](https://explorer-studio.genlayer.com/tx/0xba5c0b8896117a0265521871d9746f5dc67763ff6b0173a30e162d5acfb9e5ad); applicant [`0xf7977c2c…1eb0fc5`](https://explorer-studio.genlayer.com/tx/0xf7977c2caa1153411911a0244fc2b46c7fed08cc14e9436cacf3eba61eb0fc5); votes [`0xc2bcc267…b9ecc19`](https://explorer-studio.genlayer.com/tx/0xc2bcc26733b50fbad5fe42da14a554996c70c38289816e0e16f174a84b9ecc19), [`0x6c4d8a55…a1afaa3`](https://explorer-studio.genlayer.com/tx/0x6c4d8a5514847ce4b6006aae07c1251a8ac5c2bd6b1da49573fc2772da1afaa3), finalize [`0x99d2e997…a78f262`](https://explorer-studio.genlayer.com/tx/0x99d2e9978cefcf84a30c8336e2d67c6811d1a9d68a13b539df2d3f907a78f262); charter proposal [`0x0176a54d…101879`](https://explorer-studio.genlayer.com/tx/0x0176a54d7a89918b4a7e0d220adf7deafe646cfe7fc28baafe372cc622101879), finalize [`0x7330241a…adf297`](https://explorer-studio.genlayer.com/tx/0x7330241ae93d84155f138feeac390350b4638f61273355ed4c132cf1bcadf297) | Admission roster was frozen at 3, threshold 2; community 3 readback has 4 members and charter history |
+| Room formation | proposal [`0x8f8578ef…f2b83d`](https://explorer-studio.genlayer.com/tx/0x8f8578efd217d537155f5d894d7ee3d00361ef1fcfc9abbaf1024e6203f2b83d); counterpart consent [`0xd543ed3f…729004`](https://explorer-studio.genlayer.com/tx/0xd543ed3fc1c0d63ccb56921b5b2c2128ea3bb252bb183ab90e8252f600729004) | Evidence Lab/Research Forum room 1 became `ACTIVE`; independent rosters and thresholds read back |
+| Feature / unfeature | feature proposal [`0xe66c0a8c…74e4ac6`](https://explorer-studio.genlayer.com/tx/0xe66c0a8c223b60d29f82fa9abc522c1962f6cdba279a54a2ad5a99dba74e4ac6), finalize [`0x4d851c29…7eee9a`](https://explorer-studio.genlayer.com/tx/0x4d851c296bef735a52884f59c8af8e7b5b95a95e9532c4b8110348d3a77eee9a); unfeature proposal [`0xab10d3e9…3dde90a`](https://explorer-studio.genlayer.com/tx/0xab10d3e92936a9cbcb83e964fe5b5dafca19506cbbbb99b12ef1809eb3dde90a), finalize [`0x3fb61419…6ffc44`](https://explorer-studio.genlayer.com/tx/0x3fb614191c8a1ea84641121cb76d6cd3c44f202bd8e41c63b9c370e5916ffc44) | `featured_post` readback `0 → 1 → 0`; restoration does not silently re-feature |
+| Policy amendments | v2 proposal [`0x3dda0a9b…dd414bf`](https://explorer-studio.genlayer.com/tx/0x3dda0a9b052be9d9e4e166d8910bae34e1ef19b253c5d9c8c2bcd8fc3dd414bf), consent [`0xd15854b0…cd0f5d7`](https://explorer-studio.genlayer.com/tx/0xd15854b03317b7f15c6e75ef429b60f6f6504e76d8fa160d3f1766a4fcd0f5d7), finalize [`0xc87494b8…dd24ea`](https://explorer-studio.genlayer.com/tx/0xc87494b8618a0b51b90581c9c2da69dc16f1b5bdc2b76ac51b5f2f32b6dd24ea); v3 proposal [`0x8099a73f…7c652f`](https://explorer-studio.genlayer.com/tx/0x8099a73f7e5e3fb28ef140f340096de55671471fe61cfc710d988e556a7c652f), consent [`0x14f43c16…3a107be`](https://explorer-studio.genlayer.com/tx/0x14f43c16aecf89fa1867a17c5a0a117ddc1b66f8e51b0c3d069dc6d923a107be), finalize [`0xb03da347…53dc7aa`](https://explorer-studio.genlayer.com/tx/0xb03da347978e8bbec4ba043f28c18e8ad6429d951d03d5d0d763300e553dc7aa) | Version 1 remains preserved; v3 is active and includes a 10-minute appeal window |
+| Case 1, policy v1 | open [`0xb6dd96f8…b2dff7`](https://explorer-studio.genlayer.com/tx/0xb6dd96f8d2a8fa421a908fb10258f29b69399fa6742f10ed04cfc17c6bb2dff7), defense [`0xac15e264…eda3c25`](https://explorer-studio.genlayer.com/tx/0xac15e264a51c79ff3a9bbc20609860a9f347363f37429f2c3c8e47e86eda3c25), freeze [`0x5eba0a6a…e447742`](https://explorer-studio.genlayer.com/tx/0x5eba0a6a79bb64d4013628f4c381aa56c37165b2cdb6e13c58728f802e447742), adjudicate [`0xfc183221…75633c`](https://explorer-studio.genlayer.com/tx/0xfc18322156b56f836c25ee0d0cabe030ecff7171e4b77cdbdd311ed32475633c), close [`0x4d3d3745…878c8a`](https://explorer-studio.genlayer.com/tx/0x4d3d3745ddf43a9c7113d6f7861c59ca8bcd5413fb0464646e1db19b47878c8a) | Digest `4ff62353948e9dbf395ace111a1305ac5a47686946d14f3fe4ef7cfb26d97003`; `NO_VIOLATION`; post remains visible; case closed |
+| Case 2, policy v2 | post [`0x740bde6f…9a88453`](https://explorer-studio.genlayer.com/tx/0x740bde6fb5f69855ed4644f68470b86f8decae643cfbc2320eb340c339a88453), open [`0xc8cecff8…0d93378`](https://explorer-studio.genlayer.com/tx/0xc8cecff87af53a04b0ebca7e2e581e20dc3897c345c69501788f15f480d93378), defense [`0x33a25b82…938bc16f`](https://explorer-studio.genlayer.com/tx/0x33a25b82836eac5b06eee078975527b5b9286542ccc75e23e0fba668938bc16f), freeze [`0xa32fb73e…d6c0d1d`](https://explorer-studio.genlayer.com/tx/0xa32fb73e123ea40b6ec8e10b7115f62851e015a3ccf939eeccdcdb669d6c0d1d), adjudicate [`0x654c73cc…5009cb4`](https://explorer-studio.genlayer.com/tx/0x654c73cce17861e5c0a5abc95fed75b999765754c24e0800f7fbec7915009cb4) | Digest `7aca3638f4635de89969c2499726240dd8cc8f2ae98c603f6a28006b97b24142`; `SERIOUS_BREACH`; post hidden; room-specific restriction until `1793183958` |
+| Case 3, policy v2 + appeal | post [`0xbc6c7f17…1b956`](https://explorer-studio.genlayer.com/tx/0xbc6c7f17b4e691261564f15c2363126979d1dc13ef3294f1029282641b61b956), open [`0x7bfbe3c9…1b40f4`](https://explorer-studio.genlayer.com/tx/0x7bfbe3c918f7dda3ffbbe0be2617d766c83e111f55daa26934a39bb5691b40f4), freeze [`0xe637e1c5…63589a2`](https://explorer-studio.genlayer.com/tx/0xe637e1c5dc7234c83bc49657222d89bb45132deaf4ee4029287949e1063589a2), adjudicate [`0x40506c72…5d9e2c6d`](https://explorer-studio.genlayer.com/tx/0x40506c72c39910771da592cff459e788529362f8afd5e346dc64b9175d9e2c6d), appeal [`0x9c5c84ef…b5b27d`](https://explorer-studio.genlayer.com/tx/0x9c5c84efb0ffba71725273e6822ca338b1001f7a201e878c0df61c92b6b5b27d), freeze appeal [`0xfb5f8d63…5187cc0`](https://explorer-studio.genlayer.com/tx/0xfb5f8d63701b31c70c5bfaa8eb74c810c0d021a36928bc3e761d286555187cc0), adjudicate appeal [`0x9e82ce39…8a95ff`](https://explorer-studio.genlayer.com/tx/0x9e82ce392e4f83e7a5d076a82c96170130cdce060ccce3e8039ccab38c8a95ff) | Digest `38bd1ad80e46bb963f10ba563b64c1eb15b42402b99a7d1e620db1fccb8a6c81`; initial/appellate `SERIOUS_BREACH`; late response rollback [`0x694ed48a…165055`](https://explorer-studio.genlayer.com/tx/0x694ed48a20190a0cebba2002b69e56f33fe2268d3e0d6b87602c028207165055); restriction later expired |
+| Case 4, policy v3 + upheld appeal | post [`0x5f8ce43c…fb8d1b`](https://explorer-studio.genlayer.com/tx/0x5f8ce43c782cb22a7f3a522ca63d9e6f6cb88c86a4a0d733d6d7bfe422fb8d1b), open [`0xe28655f0…fbf79c0`](https://explorer-studio.genlayer.com/tx/0xe28655f06d3ee5b3131b71b466721794d15d6f8fb347a4e0d4c574f53fbf79c0), defense [`0x23509e92…c0216b`](https://explorer-studio.genlayer.com/tx/0x23509e928a8c15720fdc9b1b8f790368cd965d5e1a8a736b7b00676e91c0216b), freeze [`0xe50ecbfc…f3095a`](https://explorer-studio.genlayer.com/tx/0xe50ecbfc175dfce2658b9bb3bc11f15cde260f43e078d1396259b976c3f3095a), adjudicate [`0x37b5608a…eeb050`](https://explorer-studio.genlayer.com/tx/0x37b5608adc456b185e8515ffd5bb49c96a6e7d7d7031968aa9a45e0dc2eeb050), appeal [`0xcae81558…2a869`](https://explorer-studio.genlayer.com/tx/0xcae81558ee59bd7027010fb7b12d0661aaecbb505538c137d9e616bc2226a869), response [`0xc6f257ef…ba98d3`](https://explorer-studio.genlayer.com/tx/0xc6f257ef5172b067f163db1354b60cb2c0bf0d9c72e7d98ce025a0406fba98d3), freeze appeal [`0xe5152911…e388f`](https://explorer-studio.genlayer.com/tx/0xe5152911137b06bfccd7ebfbca4ccc8a205676aa1cb4940ae9f1440bb81e388f), adjudicate appeal [`0x52af3759…51a90`](https://explorer-studio.genlayer.com/tx/0x52af375972cdf6bdc3c0708626683d4b41fc442612de87e958ad8bb620751a90) | Digest `ecbd420a055680f7e30fe6a1741cc93f4d78fd9e7701271e84a381778d879d0e`; appeal digest `4e2506f6c7056aae595027c8dcf4f77118612e92ddcfd76b49d5a727833dcc68`; original/appellate `SERIOUS_BREACH`; restriction expiry remained `1793186680` (no restart) |
+| Negative controls | outsider publication [`0x387cff63…8aebebb`](https://explorer-studio.genlayer.com/tx/0x387cff637f9e5c1003353c274b57270724eb173b743e6973acec7e2588aebebb); unauthorized/empty vote [`0x502fc8a8…f341b5b`](https://explorer-studio.genlayer.com/tx/0x502fc8a891ca5c7c212e0857b8bd820a95eadc32902419a3f6e418a61f341b5b); duplicate clause [`0x1b018d08…db0bf3`](https://explorer-studio.genlayer.com/tx/0x1b018d087137a29cba361f248c1b12a793df7541a7454a60171eac1eefdb0bf3); unauthorized appeal [`0x56c10a75…f2c485`](https://explorer-studio.genlayer.com/tx/0x56c10a75dad193355135c5f96e2637774ee9418118548bf153a9d11c96f2c485) | Finalized receipts had leader `ERROR` rollbacks; no unauthorized state changes; counts remained stable |
+
+## Final authoritative readback
+
+At the final lifecycle read, `get_counts` returned `{"communities":3,"rooms":1,"posts":6,"cases":4}`. Room 1 was `ACTIVE`, policy version 3, with versions 1–3 preserved and no featured post. Post 1 remained `VISIBLE` under publication-time policy v1 with one challenge; post 4 was hidden under serious case 2; post 5 was hidden under appealed serious case 3 with its restriction expired; post 6 was hidden under case 4 with the original/appellate serious findings preserved and its original restriction expiry unchanged. Case 1 was `CLOSED/NO_VIOLATION`; cases 2–4 were terminal and their evidence/digests remained readable. The current browser wallet registration described in the superseded section below is not evidence for this current contract.
+
+## Observable semantic-consensus evidence
+
+The live adjudication receipts exposed finalized `MAJORITY_AGREE` outcomes, leader structured results and validator status/vote metadata. Case 1 exposed `AGREE, AGREE, IDLE, IDLE, AGREE` and `NO_VIOLATION`. Case 2 exposed `AGREE, AGREE, IDLE, IDLE, AGREE` and `SERIOUS_BREACH`. Case 3 exposed `IDLE, AGREE, DISAGREE, AGREE, AGREE` on the appellate reassessment and retained a serious final finding. Case 4 exposed `IDLE, AGREE, AGREE, AGREE, IDLE` on the appellate reassessment and retained a serious final finding. These records demonstrate observable validator participation; StudioNet does not expose every validator's private prompt or reasoning, so none is claimed here. Direct Mode remains the controlled proof for malformed output, prompt injection, irrelevant/fabricated anchors, unsupported severity and disagreement rejection.
+
+## Historical deployment ledgers
+
+The earlier sections are preserved for audit history, including the historical CRLF deployment, earlier contract addresses and the earlier browser-wallet transaction. They are explicitly superseded and must not be substituted for the current address or current source-parity record.
+
+## Superseded previous hardened deployment and lifecycle
 
 This is the final corrected deployment record. It supersedes the older deployment and browser-registration sections below, which remain in this file only as historical evidence. The corrected contract source is commit 4b5f8ea16722c713c2163219c044f000e02b743e.
 

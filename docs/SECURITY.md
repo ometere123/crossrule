@@ -30,7 +30,7 @@
 
 ## Known operational limits
 
-- Exact contract limits: at most 12 wallets per community, 1–6 clauses per joint agreement, up to 3 older same-room context posts, one challenge per post, one app appeal per case, at most 20 records per public page, 64 retained policy/charter history entries and 32 pending room proposals globally. Posts have stable IDs and room-scoped pagination; there is no permanent 150-post lifetime cap.
+- Exact contract limits: at most 12 wallets per community, 1–6 clauses per joint agreement, up to 3 older same-room context posts, at most 3 serial clause-distinct challenges per post, one app appeal per case, at most 20 records per public page, 64 retained policy/charter history entries and 32 pending room proposals globally. Posts have stable IDs and room-scoped pagination; there is no permanent 150-post lifetime cap.
 - All author, defense, context and allegation text is public **regardless of UI status**. Never post secrets, identifying information that requires protection, privileged documents, or private health information.
 - A wallet can create several communities with separate wallets; CROSSRULE is not a KYC or sybil-resistant identity system.
 - Default web RPC infrastructure is external and may be unavailable. The source app has no independently powered backend or fallback transaction writer.
@@ -38,7 +38,7 @@
 - The 2–10,080 minute settings are **application deadlines**, not GenLayer's protocol appeal period or finality rules.
 - No one automatically calls `freeze_case`, `freeze_appeal`, `adjudicate_case`, `adjudicate_appeal`, `close_case`, or vote finalizers. Eligible community members must submit transactions; others may submit finalization calls where the contract allows it.
 - Public enumeration is bounded to page size 20 and stored IDs. This is not an indexer or search engine.
-- One challenge per post prevents duplicate complaint spam and repeated punishment, but also prevents retrying an earlier rejected complaint on that same post.
+- The bounded challenge policy permits up to three serial clause-specific proceedings per post. It prevents duplicate-clause harassment and simultaneous contradictory sanctions, while allowing a legitimate later clause after a prior case reaches a non-breach terminal state. An upheld breach blocks additional proceedings against that post.
 - Contract source has no token transfer or withdrawal method; GEN is only network gas/fee asset. Do not send arbitrary funds to the contract.
 
 ## Reviewer security tests
@@ -60,15 +60,15 @@ The audit found and corrected the following high-risk paths:
 * Evidence and appeal digests use canonical sorted-key UTF-8 JSON and are recomputed before each corresponding adjudication.
 * Validator assessment independently recomputes the decision-bearing finding, clause and material anchor support; valid JSON or an irrelevant genuine substring cannot authorize a sanction.
 * A hidden post cannot remain the active featured post, restored visibility does not silently restore a previous feature endorsement, serious findings require serious-authorized clauses, and restrictions are keyed by both room and wallet.
-* One-challenge finality is explicit: a restored or appealed post cannot receive a second case through a different challenger, clause, policy version or evidence reference.
+* Challenge finality is bounded and serial: duplicate clauses, simultaneous unresolved cases and proceedings after an upheld breach are rejected; a restored or appealed post may only proceed under another applicable clause after the prior case reaches an allowed non-breach terminal state, and never beyond the three-case bound.
 * Appeal reversal removes only its own restriction; an upheld serious appeal preserves the original expiry instead of restarting it.
 * The frontend now validates bounded arguments, tracks account/network changes, prevents duplicate writes after unknown outcomes, and requires finalized successful execution before announcing success.
 
-These corrections are regression-tested by 61 offline tests, 22 genuine Direct Mode tests in the Linux CI runner and 31/31 killed purposeful mutations. The results are implementation evidence, not an external security certification.
+These corrections are regression-tested by 66 offline tests, 24 genuine Direct Mode tests in the Linux CI runner and 34/34 killed purposeful mutations. The results are implementation evidence, not an external security certification.
 
 ## Current residual findings
 
-1. The corrected-contract six-wallet StudioNet lifecycle is live-verified, including two communities, applicant consent, counterpart consent, an expired proposal, bilateral room governance, feature/unfeature, policy versions 1–2, four posts, two semantic cases, an upheld application appeal and finalized negative permission controls. The live limitation is that public receipts expose validator vote/status metadata and structured leader output, not every validator's private prompt or reasoning; no private validator trace is claimed.
+1. The corrected-contract six-wallet StudioNet lifecycle is live-verified, including three communities, applicant consent, charter history, counterpart consent, an expired proposal, bilateral room governance, feature/unfeature, three policy versions, six posts, four semantic cases, two appeals, an upheld serious appeal without suspension-clock extension and finalized negative permission controls. The live limitation is that public receipts expose validator vote/status metadata and structured leader output, not every validator's private prompt or reasoning; no private validator trace is claimed.
 2. Public TreeMap JSON is intentionally permanent/public. There is no privacy or deletion guarantee.
 3. The root JavaScript development tree reports six advisories and the frontend development tree reports three dev-only Vitest/tinypool advisories. Production-only audits are clean. Fixing them requires a breaking test-toolchain migration that was not silently introduced into the locked stack.
 4. genlayer-test==0.29.2 has a known Windows temporary-file cleanup defect and a runner archive-name mismatch. CI uses a reproducible pinned-runner workaround; the Windows-only local shim is not part of the contract or production runtime.

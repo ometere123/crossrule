@@ -10,7 +10,7 @@ CROSSRULE lets two autonomous wallet communities create a shared public discussi
 
 ## Technical description
 
-CROSSRULE is one Python Intelligent Contract on GenLayer StudioNet (chain 61999) with no owner, moderator, upgrade path, database, indexer or signing backend. It stores communities, member-consent records, indexed bilateral relationships, counterpart-consented room proposals, bilateral voter snapshots, versioned charters and policies, stable-ID paginated posts, frozen cases, SHA-256 evidence digests, case-scoped restrictions and one application appeal in bounded JSON `TreeMap` state. The Next.js frontend is a presentation and injected-wallet transaction layer. All user-controlled application deadlines are configured in the frontend from 2 to 10,080 minutes and frozen on-chain at the relevant transition; they do not control GenLayer protocol finality.
+CROSSRULE is one Python Intelligent Contract on GenLayer StudioNet (chain 61999) with no owner, moderator, upgrade path, database, indexer or signing backend. It stores communities, member-consent records, indexed bilateral relationships, counterpart-consented room proposals, bilateral voter snapshots, versioned charters and policies, stable-ID paginated posts, frozen cases, SHA-256 evidence digests, case-scoped restrictions, bounded serial clause-aware challenges and one application appeal per case in bounded JSON `TreeMap` state. The Next.js frontend is a presentation and injected-wallet transaction layer. All user-controlled application deadlines are configured in the frontend from 2 to 10,080 minutes and frozen on-chain at the relevant transition; they do not control GenLayer protocol finality.
 
 ## Social-category justification
 
@@ -18,7 +18,7 @@ The product addresses a concrete coordination problem: two communities may want 
 
 ## Intelligent Contract and Equivalence Principle
 
-The contract enforces the deterministic boundaries: three distinct consenting founders, applicant consent, two-thirds thresholds per frozen roster, indexed disjoint bilateral voting identities, counterpart consent and proposal expiry, bounded clause IDs and severities, same-room evidence, immutable post text and IDs, deterministic pagination, deadlines, policy snapshots, case-scoped sanctions and one appeal. The subjective step is GenLayer-native: a leader produces a structured finding and validators independently assess the same frozen evidence, including whether the proposed anchor materially supports the clause and classification. The contract accepts only matching decision-bearing finding, clause and anchor; it does not require identical prose. Invalid structure, fabricated or irrelevant anchors, unsupported serious severity, validator disagreement, provider errors and digest mismatches do not receive a fallback ruling.
+The contract enforces the deterministic boundaries: three distinct consenting founders, applicant consent, two-thirds thresholds per frozen roster, indexed disjoint bilateral voting identities, counterpart consent and proposal expiry, bounded clause IDs and severities, same-room evidence, immutable post text and IDs, deterministic pagination, deadlines, publication-time policy snapshots, bounded serial clause-aware challenges, case-scoped sanctions and one appeal per case. The subjective step is GenLayer-native: a leader produces a structured finding and validators independently assess the same frozen evidence, including whether the proposed anchor materially supports the clause and classification. The contract accepts only matching decision-bearing finding, clause and anchor; it does not require identical prose. Invalid structure, fabricated or irrelevant anchors, unsupported serious severity, validator disagreement, provider errors and digest mismatches do not receive a fallback ruling.
 
 ## Key functionality
 
@@ -38,12 +38,12 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 
 * Frontend: [crossrule.vercel.app](https://crossrule.vercel.app)
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
-* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608)
-* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0)
+* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab)
+* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468)
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Latest full CI for the final pushed code: [run 40598385068](https://github.com/ometere123/crossrule/actions/runs/40598385068), successful 9/9 jobs at `65b8d69716790bd67375fa164114bb9323066e2c`
+* Latest full CI: the final successful run for the release commit is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) and the closeout report.
 
 ## Production UI evidence
 
@@ -59,7 +59,7 @@ The public Accord Chamber interface was inspected at `https://crossrule.vercel.a
 
 ## Known limitations
 
-The final deployed address has finalized exact-byte source parity and a completed fresh six-CLI-wallet live social lifecycle: two communities, one rejected expired proposal, one active room, four stable posts, two semantic cases, one upheld application appeal and finalized negative controls. The earlier browser-wallet registration was performed against the superseded contract and is retained as historical proof of the injected EIP-1193 path; no CLI key was imported into the browser. StudioNet receipts expose validator status/vote metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, six clauses, three context posts, one challenge per post, one application appeal, 20 records per public page and bounded active indexes; posts have no permanent lifetime cap. Dependency advisories are reported rather than hidden. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
+The final deployed address has finalized exact-byte source parity and a completed fresh six-CLI-wallet live social lifecycle: three communities, one active room, six stable posts, three policy versions, four semantic cases, two appeals and finalized negative controls. The earlier browser-wallet registration was performed against a superseded contract and is retained only as historical proof of the injected EIP-1193 path; no CLI key was imported into the browser for this final deployment. StudioNet receipts expose validator vote/status metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, six clauses, three context posts, at most three serial clause-distinct challenges per post, one application appeal per case, 20 records per public page and bounded active indexes; posts have no permanent lifetime cap. Dependency advisories are reported rather than hidden. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
 
 ## Portal review framing
 

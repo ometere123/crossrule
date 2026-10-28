@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the hardened source is pushed to `main`, the corrected contract is deployed to StudioNet, the fresh lifecycle was executed with six distinct CLI identities, and the Accord Chamber frontend is live on Vercel. The live record contains two active communities, one rejected expired room proposal, one active bilateral room, policy versions 1–2, four stable post IDs, two semantic cases, an upheld application appeal and finalized negative permission controls. The final GitHub CI gate is green. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
+**Current release status:** the hardened source is pushed to `main`, the corrected contract is deployed to StudioNet, the fresh lifecycle was executed with six distinct CLI identities, and the Accord Chamber frontend is live on Vercel. The live record contains three active communities, one active bilateral room, policy versions 1–3, six stable post IDs, four semantic cases, appealed serious findings with preserved original/appellate decisions, and finalized negative permission controls. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
 
 ## Exact stack
 
@@ -27,15 +27,15 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
-| Vercel deployment | [READY production deployment](https://vercel.com/delealufejoel-4184s-projects/crossrule/72LgnJ16xeF3eGiwpvdBXajxp19F) (`dpl_72LgnJ16xeF3eGiwpvdBXajxp19F`), uploaded by CLI from the final frontend checkout |
-| Contract | `0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608` |
-| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608) |
-| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0x6896ffebe39d2f37fbe7d1d1cbfc7a493a9ee3be1fd5552120ed07e03a7db6c0) |
-| Latest full GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40598385068) at `65b8d69716790bd67375fa164114bb9323066e2c` |
-| Source | SHA-256 `2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b`, commit `4b5f8ea16722c713c2163219c044f000e02b743e` |
-| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (47,060 bytes) |
+| Vercel deployment | Final READY production deployment is recorded in [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) after the final source push |
+| Contract | `0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab` |
+| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab) |
+| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468) |
+| Latest full GitHub CI | The final successful run is recorded in [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) and the release report |
+| Source | SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2`, contract-source commit `21e5af60ac116b31a7d6fa53034a85303f28cecf` |
+| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (49,865 bytes) |
 
-The live StudioNet readback after the fresh demonstration lifecycle is communities `2`, room records `2` (`1` active and `1` rejected), posts `4`, cases `2`. The active room has policy versions 1 and 2; both cases were filed under the active v2 snapshot. The public casebook contains one `NO_VIOLATION` case, one `MINOR_BREACH` case, one upheld application appeal and finalized expiry, outsider-publication and duplicate-challenge controls.
+The live StudioNet readback after the fresh demonstration lifecycle is communities `3`, room records `1` (`ACTIVE`), posts `6`, cases `4`. The active room has policy versions 1–3. Case 1 is a closed `NO_VIOLATION` under policy v1; cases 2–4 are serious findings under the policy version captured when each post was published, with cases 3 and 4 independently appealed and case 4 demonstrating an upheld appeal without restarting the original suspension clock. Finalized outsider, unauthorized-vote, duplicate-challenge and unauthorized-appeal controls are retained.
 
 The production Accord Chamber was checked at 1440, 1280, 1024, 768, 390 and 375 CSS pixels with no horizontal overflow, no page errors and no console errors. Representative captures: [desktop hero](docs/screenshots/accord-hero-1440.png), [mobile hero](docs/screenshots/accord-hero-390.png), and [full desktop page](docs/screenshots/accord-1440.png).
 
@@ -50,7 +50,7 @@ The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC
 5. Room members create text posts and replies. Two-thirds approval by each community can feature or unfeature a post. Public readers can inspect the feed, agreement, and audit without a wallet.
 6. Another room member may challenge a post by citing one ratified clause and up to three prior same-room context posts. The author receives the frozen defense window; evidence is then hashed and sent to GenLayer's leader/validator LLM process. Validators independently assess the case; the equivalence logic requires a matching **decision-bearing classification**, not merely plausible prose.
 7. Findings: `NO_VIOLATION`, `INSUFFICIENT_EVIDENCE`, `MINOR_BREACH`, or `SERIOUS_BREACH`. Minor and serious proven breaches hide the post from the official feed. Serious requires a clause that explicitly allows it, and suspends the author from that room for the proposed duration. An appeal can restore the post and remove the case-specific suspension. An upheld serious sanction does **not** restart its clock.
-8. The adversely affected party can file **one application-level appeal** within the policy's appeal window; the other party may respond during the frozen response window. An independent GenLayer semantic reassessment closes the case. The application appeal is distinct from GenLayer protocol-level challenges/finality.
+8. The adversely affected party can file **one application-level appeal per case** within the policy's appeal window; the other party may respond during the frozen response window. An independent GenLayer semantic reassessment closes the case. The application appeal is distinct from GenLayer protocol-level challenges/finality.
 
 ## Repository structure
 
@@ -112,7 +112,7 @@ Every proposal's own duration is adjustable in the web UI from **2 minutes to 7 
 - No Supabase, Cloudflare Worker, database, hidden LLM service, off-chain reputation or custodial funds.
 - No third community, AI autoposting, token rewards, stake/slash economics, hidden moderation content deletion, external social-platform integration, or infinite-scroll indexer.
 - Text content remains recoverable from public contract storage even if marked hidden in the official feed. Users must never post secrets or private data.
-- The application supports **one challenge and one appeal per post**. The contract enforces **12 members per community**, six clauses per policy and bounded page reads of at most 20 records; posts use stable room-scoped indexes rather than a permanent lifetime cap. Historic post bodies and evidence remain public and immutable.
+- The application supports up to **three serial, clause-distinct challenge cases per post**, one per applicable clause, and one application appeal per case. A new case cannot begin while an earlier case/appeal is unresolved, and an upheld breach blocks further proceedings against that post. The contract enforces **12 members per community**, six clauses per policy and bounded page reads of at most 20 records; posts use stable room-scoped indexes rather than a permanent lifetime cap. Historic post bodies and evidence remain public and immutable.
 - A future Portal milestone may introduce different functionality, but it is outside this complete initial submission.
 
 ## Documentation

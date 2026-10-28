@@ -4,7 +4,7 @@ The numbers **5/5/5/5 are a target for Portal review**, not a self-awarded score
 
 ## Current observed results
 
-The final hardening run reports: Python offline `61 passed`; genuine GenVM Direct Mode `22 passed` in the Linux CI runner; purposeful mutation suite `31/31 killed`; GenVM linter passed; `Crossrule` validated with the corrected method set; frontend ESLint pass; TypeScript pass; Vitest `11 passed`; Next production build pass; local Playwright `14 passed` across desktop and mobile projects; production Playwright `14 passed` against `https://crossrule.vercel.app` after the final wallet rehydration fix. The corrected deployment is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md): contract 0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608, two active communities, one rejected expired proposal, one active room, four posts, two semantic cases and one upheld application appeal. The final checked contract source SHA is `2d3cb381d73ef3ef4dad05ae49707c5ad4ee943190442269fc905c826bf2cb0b`.
+The current hardening run reports: Python offline `66 passed`; genuine GenVM Direct Mode `24 passed` with the documented Windows temp-file shim (Linux CI runs the genuine runner without that local shim); purposeful mutation suite `34/34 killed`; GenVM linter passed; frontend ESLint pass; TypeScript strict pass; Vitest `14 passed`; Next production build pass; focused transaction-recovery Playwright pass, with full local and production browser totals recorded after the final Vercel deployment. The corrected deployment is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md): contract `0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab`, three active communities, one active room, six posts, four semantic cases and two application appeals. The exact contract source SHA is `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2`.
 
 The contract deployment, source parity and completed six-wallet social lifecycle are recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Deployment initialization, public reads, semantic adjudications and the application appeal were live-verified; receipts and readbacks are the authority.
 
@@ -46,7 +46,8 @@ The contract deployment, source parity and completed six-wallet social lifecycle
 - Appeal grounds and optional respondent reply.
 - Appeal reversal restores post and removes its restriction.
 - Appeal upholding a serious finding does not extend earlier suspension.
-- Only adversely affected party may appeal; one application appeal.
+- Only adversely affected party may appeal; one application appeal per case.
+- Up to three serial clause-specific challenge proceedings per post; duplicate clauses, simultaneous unresolved cases and proceedings after an upheld breach are rejected.
 - Restored visibility does not silently restore a prior feature endorsement; a fresh bilateral feature vote is required.
 - Frozen evidence hash and original policy version unchanged by later amendments.
 - Malformed context IDs rejected before reading.
@@ -93,4 +94,4 @@ Final reviewer score is external and not inferable solely from these checks.
 
 ## Completed live evidence
 
-The live run used six distinct StudioNet signers (A1/A2/A3 and B1/B2/B3), plus a fourth-member applicant and an outsider negative-control wallet. It verified founding consent, admission consent and threshold, charter history, a rejected initial room, bilateral room ratification, same-room discussion, feature and unfeature, a version-2 amendment with an open version-1 case, a no-breach semantic decision, a minor-breach semantic decision, an author appeal with opposing response and independent reassessment, and finalized unauthorized posting, invalid clause and late appeal failures. The exact transaction hashes and readbacks are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).
+The live run used six distinct StudioNet signers (A1/A2/A3 and B1/B2/B3), plus a fourth-member applicant and an outsider negative-control wallet. It verified three-community state, founding consent, admission consent and threshold, charter history, counterpart consent, bilateral room ratification, same-room discussion, feature and unfeature, policy versions 1–3, a version-1 no-violation case, serious findings under later frozen policy snapshots, two application appeals, suspension expiry and upheld-appeal clock preservation, and finalized unauthorized posting, unauthorized vote, duplicate challenge and unauthorized appeal failures. The exact transaction hashes and readbacks are in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md).

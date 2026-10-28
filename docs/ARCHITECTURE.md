@@ -166,7 +166,7 @@ The browser has no private-key imports, mnemonic field, secret-bearing server ro
 
 ## Deployed record used for review
 
-The final source-matched StudioNet deployment at `0xB7c1C9A4f87BC77Df32D28DA5487bf45f2AAa608` reads two active communities, one rejected expired proposal, one active room, four posts and two cases. The active room preserves policy versions 1–2; case 1 is a finalized `NO_VIOLATION`, and case 2 is a finalized `MINOR_BREACH` with an upheld application appeal. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for transaction-level provenance.
+The current source-matched StudioNet deployment at `0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab` reads three active communities, one active room, six posts and four cases. The active room preserves policy versions 1–3; case 1 is a closed `NO_VIOLATION`, and cases 2–4 are serious findings with preserved original/appellate records where appealed. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for transaction-level provenance.
 
 The deployed source was validated by the genuine GenVM linter as 38 methods: 10 views and 28 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
 
