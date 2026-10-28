@@ -4,7 +4,7 @@ import {ArrowRight,ArrowLeft,BookOpen,CheckCircle2,Handshake,Plus,RefreshCw,Scal
 import AppShell,{type Screen} from './AppShell';
 import LandingPage from './LandingPage';
 import {Empty,Field,Panel,SelectField,Status} from './Forms';
-import {connectedWallet,connectWallet,disconnectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,transactionUrl,write,type TransactionObservation} from '@/lib/chain';
+import {actionFingerprint,connectedWallet,connectWallet,disconnectWallet,inspectTransaction,isConfigured,NETWORK_ID,readJson,recentTransactions,reconcileTransactions,rememberObservation,transactionUrl,unresolvedTransactions,write,type TransactionObservation} from '@/lib/chain';
 import {EMPTY_COUNTS,formatTime,policyOf,sampleClauses,secondsLeft,threshold,truncate,type Case,type CaseListItem,type Community,type CommunityListItem,type Counts,type CrossrulePost,type Room,type RoomListItem} from '@/lib/types';
 
 type FormState=Record<string,string>;
@@ -105,6 +105,7 @@ export default function CrossruleApp(){
   const [txState,setTxState]=useState<'idle'|'requesting'|'submitted'|'success'|'failed'|'unknown'>('idle');
   const [txObservation,setTxObservation]=useState<TransactionObservation|null>(null);
   const [txHistory,setTxHistory]=useState<Record<string,TransactionObservation>>({});
+  const [recoveryReady,setRecoveryReady]=useState(false);
   const [roomTab,setRoomTab]=useState<'discussion'|'rules'|'governance'>('discussion');
   const [postOffset,setPostOffset]=useState(0);
   const [now,setNow]=useState(0);
@@ -135,20 +136,26 @@ export default function CrossruleApp(){
     if(!isConfigured)return;
     let alive=true;
     const load=async()=>{
-      const items=recentTransactions().slice(0,20);
-      const observations=await Promise.all(items.map(async item=>{
-        try{return await inspectTransaction(item.hash);}catch{return null;}
-      }));
-      if(!alive)return;
-      setTxHistory(prev=>{
-        const next={...prev};
-        observations.forEach(observation=>{if(observation)next[observation.hash]=observation;});
-        return next;
-      });
+      setRecoveryReady(false);
+      try{
+        await reconcileTransactions(wallet||undefined);
+        const items=recentTransactions().slice(0,20);
+        const observations=await Promise.all(items.map(async item=>{
+          try{return await inspectTransaction(item.hash);}catch{return item.lastObservation??null;}
+        }));
+        if(!alive)return;
+        setTxHistory(prev=>{
+          const next={...prev};
+          observations.forEach(observation=>{if(observation)next[observation.hash]=observation;});
+          return next;
+        });
+      }finally{if(alive)setRecoveryReady(true);}
     };
     void load();
-    return()=>{alive=false;};
-  },[]);
+    const refreshFromOtherTab=()=>{void load();};
+    window.addEventListener('crossrule:transaction-event',refreshFromOtherTab);
+    return()=>{alive=false;window.removeEventListener('crossrule:transaction-event',refreshFromOtherTab);};
+  },[wallet]);
   useEffect(()=>{
     if(!isConfigured||screen!=='collaborate')return;
     let alive=true;
@@ -223,7 +230,6 @@ export default function CrossruleApp(){
     let submittedHash='';
     try{
       if(!wallet)throw new Error('Connect a StudioNet wallet first.');
-      if(txState==='unknown')throw new Error('A previous transaction has an unknown outcome. Check its status before submitting another action.');
       validateWrite(method,args);
       setTxState('requesting');setWorking(true);
       const hash=await write(method,args,wallet,received=>{submittedHash=received;setTx(received);setTxState('submitted');setTxObservation(null);});
@@ -256,16 +262,17 @@ export default function CrossruleApp(){
     setError('');
     setNotice(revoked?'Wallet disconnected from CROSSRULE.':'Wallet session cleared. Your extension may still retain site access.');
   }
-  const blockedByUnknown=txState==='unknown';
+  const actionBlocked=(method:string,args:unknown[])=>Boolean(wallet&&unresolvedTransactions(wallet).some(item=>item.fingerprint===actionFingerprint(method,args)));
   const act=(method:string,args:unknown[],label:string,eligible=true)=>
-    <button className="btn" disabled={!wallet||!isConfigured||working||blockedByUnknown||!eligible} onClick={()=>void send(method,args)} title={!eligible?'The connected wallet is not eligible for this action.':undefined}>{working?'Tracking…':label}</button>;
+    <button className="btn" disabled={!wallet||!isConfigured||!recoveryReady||working||actionBlocked(method,args)||!eligible} onClick={()=>void send(method,args)} title={!eligible?'The connected wallet is not eligible for this action.':actionBlocked(method,args)?'An earlier transaction for this action is unresolved. Inspect it before trying again.':!recoveryReady?'Checking prior transaction outcomes…':undefined}>{working?'Tracking…':label}</button>;
   const mini=(method:string,args:unknown[],label:string,eligible=true)=>
-    <button className="btn tiny secondary" disabled={!wallet||!isConfigured||working||blockedByUnknown||!eligible} onClick={()=>void send(method,args)} title={!eligible?'The connected wallet is not eligible for this action.':undefined}>{label}</button>;
+    <button className="btn tiny secondary" disabled={!wallet||!isConfigured||!recoveryReady||working||actionBlocked(method,args)||!eligible} onClick={()=>void send(method,args)} title={!eligible?'The connected wallet is not eligible for this action.':actionBlocked(method,args)?'An earlier transaction for this action is unresolved. Inspect it before trying again.':!recoveryReady?'Checking prior transaction outcomes…':undefined}>{label}</button>;
   async function checkTransaction(){
     if(!tx)return;
     setLoading(true);setError('');
     try{
       const observation=await inspectTransaction(tx);
+      rememberObservation(tx,observation);
       setTxObservation(observation);setTxHistory(prev=>({...prev,[tx]:observation}));
       if(observation.successful){setTxState('success');setNotice('Transaction finalized with successful execution.');await refresh();}
       else if(observation.finalized){setTxState('failed');setError('Transaction finalized, but contract execution failed. No state change should be assumed.');}
@@ -349,7 +356,11 @@ export default function CrossruleApp(){
   const featureVoterEligible=Boolean(room?.feature_vote&&walletKey&&([...room.feature_vote.voters_a,...room.feature_vote.voters_b].some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.yes_a.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.yes_b.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.no_a.some(voter=>voter.toLowerCase()===walletKey))&&(!room?.feature_vote.no_b.some(voter=>voter.toLowerCase()===walletKey)));
   const roomConsentEligible=Boolean(room?.consent&&walletKey&&((memberOf(roomCommunityA)&&!room.consent.consented_a)||(memberOf(roomCommunityB)&&!room.consent.consented_b)));
   const collaborationEligible=memberOf(collabCommunityA)||memberOf(collabCommunityB);
-  const challengeEligible=Boolean(post&&!post.case_id&&roomMember&&walletKey&&post.author.toLowerCase()!==walletKey);
+  const postPolicy=post?.policy??policy;
+  const activeCaseId=post?.active_case_id??(post?.status==='UNDER_REVIEW'?post.case_id:0);
+  const challengeIds=post?.challenge_ids??(post?.case_id?[post.case_id]:[]);
+  const challengedClauses=post?.challenged_clauses??[];
+  const challengeEligible=Boolean(post&&activeCaseId===0&&challengeIds.length<3&&roomMember&&walletKey&&post.author.toLowerCase()!==walletKey&&value('clause')&&!challengedClauses.includes(value('clause')));
   const appealEligible=Boolean(caseFile&&caseFile.status==='DECIDED'&&!caseFile.appeal&&walletKey&&((['MINOR_BREACH','SERIOUS_BREACH'] as string[]).includes(caseFile.finding)?caseFile.author.toLowerCase()===walletKey:caseFile.reporter.toLowerCase()===walletKey));
   const responseEligible=Boolean(caseFile?.status==='APPEAL_OPEN'&&caseFile.appeal&&walletKey&&((caseFile.appeal.appellant.toLowerCase()===caseFile.author.toLowerCase()?caseFile.reporter:caseFile.author).toLowerCase()===walletKey)&&!caseFile.appeal.response_submitted);
 
@@ -507,15 +518,16 @@ export default function CrossruleApp(){
     {screen==='post'&&post&&<><div className="section-head"><div><button className="btn tiny ghost" onClick={()=>open('room')}><ArrowLeft size={14}/>Room discussion</button>
       <h2 style={{marginTop:15}}>Post #{post.id}</h2><p className="muted small">{post.author} · {formatTime(post.at)}</p></div><Status value={post.status}/></div>
       <div className="grid2"><Panel title="Published contribution"><p className="prose">{post.body}</p>
-        <div className="divider"/><div className="between"><span className="small muted">Room #{post.room_id} · Parent #{post.parent_id||'none'}</span>{post.case_id?<button className="btn secondary tiny" onClick={()=>void chooseCase(post.case_id)}>Inspect case #{post.case_id}</button>:<span className="pill">No case</span>}</div>
+        <div className="divider"/><div className="between"><span className="small muted">Room #{post.room_id} · Parent #{post.parent_id||'none'} · Policy v{post.policy_version??'?'}</span>{activeCaseId?<button className="btn secondary tiny" onClick={()=>void chooseCase(activeCaseId)}>Inspect case #{activeCaseId}</button>:<span className="pill">No active case</span>}</div>
         <div className="footnote">This is an immutable public on-chain record. Hiding from a room feed is not deletion. The post ID, author and any frozen case remain stable.</div>
       </Panel><Panel title="Challenge under a shared rule">
-        {post.case_id?<div className="notice">This post already has its one finality-bound case. Reports cannot be duplicated, even after a successful appeal restores visibility. Open case #{post.case_id} to review its frozen evidence and outcome; a restored post needs a fresh bilateral feature vote.</div>:<>
-          <SelectField label="Applicable clause" value={value('clause')} onChange={v=>change('clause',v)} options={[{value:'',label:'Select clause'},...(policy?.clauses??[]).map(c=>({value:c.id,label:`${c.id} — ${c.text.slice(0,65)}`}))]}/>
+        {activeCaseId?<div className="notice">A challenge is currently active. Another clause cannot be opened until this case and any appeal reach a terminal state.</div>:<>
+          {challengeIds.length>0&&<div className="footnote">Completed clause challenges: {challengeIds.map((id,index)=>`#${id} · ${challengedClauses[index]??'recorded clause'}`).join(' · ')}. The original case history remains public and immutable.</div>}
+          <SelectField label="Applicable clause" value={value('clause')} onChange={v=>change('clause',v)} options={[{value:'',label:'Select clause'},...(postPolicy?.clauses??[]).map(c=>({value:c.id,label:`${c.id} — ${c.text.slice(0,65)}`}))]}/>
           <Field label="Your evidence-grounded allegation" value={value('allegation')} onChange={v=>change('allegation',v)} rows={6} max={1200}/>
           <Field label="Context post IDs (comma separated, up to 3)" value={value('context')} onChange={v=>change('context',v)} placeholder="12, 13" help="Only earlier posts within this room; their original text is frozen with the case."/>
           {act('open_case',[post.id,value('clause'),value('allegation'),JSON.stringify(value('context').trim()?value('context').split(',').map(s=>asNumber(s.trim())):[])],'Submit rule challenge',challengeEligible)}
-          <p className="footnote">A report marks the post under review, but it does not automatically impose a sanction.</p>
+          <p className="footnote">This post may have up to three clause-specific challenges, one at a time. A clause cannot be reported twice. A later challenge is allowed only after an earlier case closes without an upheld breach; a restored post still needs a fresh bilateral feature vote.</p>
         </>}
       </Panel></div>
     </>}

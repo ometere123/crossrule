@@ -5,9 +5,7 @@ test('public homepage, communities and founding form',async({page})=>{
   await expect(page.getByRole('heading',{name:/One shared space/})).toBeVisible();
   await page.getByRole('button',{name:'Communities',exact:true}).click();
   await expect(page.getByText('Independent governance')).toBeVisible();
-  if(process.env.PLAYWRIGHT_BASE_URL){
-    await expect(page.getByText(/Source build · not deployed/)).toHaveCount(0);
-  }else await expect(page.getByText(/Source build · not deployed/)).toBeVisible();
+  await expect(page.getByText(/Source build · not deployed/)).toHaveCount(0);
   await page.getByRole('button',{name:'Create community',exact:true}).last().click();
   await expect(page.getByLabel('Initial charter')).toBeVisible();
   await page.getByLabel('Community name').fill('Builders Guild');
@@ -42,7 +40,7 @@ test('injected wallet connects and switches from the wrong network',async({page}
   await page.addInitScript(()=>{
     let chain='0x1';
     window.ethereum={request:async({method,params})=>{
-      if(method==='eth_requestAccounts')return ['0x'+'1'.repeat(40)];
+      if(method==='eth_accounts'||method==='eth_requestAccounts')return ['0x'+'1'.repeat(40)];
       if(method==='eth_chainId')return chain;
       if(method==='wallet_switchEthereumChain'){
         chain=(params?.[0] as {chainId:string}).chainId;

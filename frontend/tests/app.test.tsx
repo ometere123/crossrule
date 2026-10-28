@@ -6,7 +6,10 @@ afterEach(()=>{cleanup();vi.unstubAllGlobals();});
 
 vi.mock('@/lib/chain',()=>({
   NETWORK_ID:61999,EXPLORER:'https://explorer-studio.genlayer.com',isConfigured:false,ADDRESS:'',
-  connectWallet:vi.fn(),readJson:vi.fn(),write:vi.fn(),
+  actionFingerprint:(method:string,args:unknown[])=>`${method}:${JSON.stringify(args)}`,
+  connectedWallet:vi.fn(async()=>''),connectWallet:vi.fn(),disconnectWallet:vi.fn(),inspectTransaction:vi.fn(),
+  readJson:vi.fn(),write:vi.fn(),reconcileTransactions:vi.fn(async()=>[]),rememberObservation:vi.fn(),
+  unresolvedTransactions:vi.fn(()=>[]),
   recentTransactions:()=>[],transactionUrl:(hash:string)=>`https://explorer-studio.genlayer.com/tx/${hash}`
 }));
 import CrossruleApp from '@/components/CrossruleApp';

@@ -141,6 +141,49 @@ def test_short_post_can_reach_semantic_adjudication(direct_deploy, direct_vm, di
     assert parsed(contract.get_case(cid))["finding"] == "NO_VIOLATION"
 
 
+def test_long_post_cannot_use_trivial_one_byte_anchor(direct_deploy, direct_vm, direct_accounts):
+    direct_vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    rid = ratified_room(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    post_text = "x is a long publication with enough surrounding evidence to require grounding."
+    pid = contract.publish_post(rid, 0, post_text)
+    direct_vm.sender = direct_accounts[3]
+    cid = contract.open_case(pid, "PROMO", "Testing an irrelevant one-byte quote.", "[]")
+    direct_vm.warp("2026-10-26T12:03:00+00:00")
+    contract.freeze_case(cid)
+    invalid = json.dumps({"finding": "NO_VIOLATION", "clause_id": "PROMO",
+        "anchor": "x", "reason": "The one-byte excerpt is not enough to ground this decision."})
+    direct_vm.mock_llm(r"You interpret a JOINTLY RATIFIED", invalid)
+    with direct_vm.expect_revert("validator-agreed result invalid"):
+        contract.adjudicate_case(cid)
+
+
+def test_clause_aware_serial_challenges_survive_direct_mode(direct_deploy, direct_vm, direct_accounts):
+    direct_vm.warp("2026-10-26T12:00:00+00:00")
+    contract = direct_deploy(CONTRACT)
+    rid = ratified_room(contract, direct_vm, direct_accounts)
+    direct_vm.sender = direct_accounts[0]
+    pid = contract.publish_post(rid, 0, TEXT)
+    direct_vm.sender = direct_accounts[3]
+    first = contract.open_case(pid, "PROMO", "First clause challenge.", "[]")
+    direct_vm.warp("2026-10-26T12:03:00+00:00")
+    contract.freeze_case(first)
+    decision = json.dumps({"finding": "NO_VIOLATION", "clause_id": "PROMO",
+        "anchor": "20-contract benchmark includes seeded flaws",
+        "reason": "The publication is contextual benchmark material, not a prohibited pitch."})
+    direct_vm.mock_llm(r"You interpret a JOINTLY RATIFIED", decision)
+    contract.adjudicate_case(first)
+    direct_vm.clear_mocks()
+    direct_vm.warp("2026-10-26T12:10:00+00:00")
+    contract.close_case(first)
+    direct_vm.sender = direct_accounts[4]
+    second = contract.open_case(pid, "EVIDENCE", "A second clause remains independently reportable.", "[]")
+    assert parsed(contract.get_post(pid))["challenge_ids"] == [int(first), int(second)]
+    with direct_vm.expect_revert("already been challenged under this clause"):
+        contract.open_case(pid, "EVIDENCE", "Duplicate clause challenge.", "[]")
+
+
 def test_posts_continue_past_150_with_bounded_direct_pages(direct_deploy, direct_vm, direct_accounts):
     contract = direct_deploy(CONTRACT)
     rid = ratified_room(contract, direct_vm, direct_accounts)

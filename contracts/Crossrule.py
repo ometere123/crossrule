@@ -15,7 +15,11 @@ MAX_HISTORY = 64
 MAX_PENDING_ROOM_PROPOSALS = 32
 MAX_CURRENT_PARTNERS = 64
 MAX_PAIR_RESERVATIONS = 32
-MAX_ACTIVE_RESTRICTIONS = 32
+# This is a policy bound, not a cap on the number of independently recorded
+# sanctions.  Current sanctions are pruned from the per-room/per-wallet index
+# as they expire; the immutable case history remains in `cases`.
+MAX_CHALLENGES_PER_POST = 3
+MAX_LONG_ANCHOR_BYTES = 8
 MAX_PAGE_SIZE = 20
 
 
@@ -36,8 +40,15 @@ def valid_finding(result, clause_id, post_text):
     anchor, reason = result["anchor"], result["reason"]
     if not isinstance(anchor, str) or not isinstance(reason, str):
         return False
+    post_bytes = len(post_text.encode("utf-8"))
+    anchor_bytes = len(anchor.encode("utf-8"))
+    # A complete short post is a valid witness.  For a longer post, a one-byte
+    # quote is too easy to detach from the decision and is not accepted as the
+    # material evidence anchor.  The semantic validator still decides whether
+    # the bounded exact excerpt actually supports the finding.
+    minimum_anchor = 1 if post_bytes <= MAX_LONG_ANCHOR_BYTES else MAX_LONG_ANCHOR_BYTES
     if (not anchor.strip() or
-            not (1 <= len(anchor.encode("utf-8")) <= 180) or
+            not (minimum_anchor <= anchor_bytes <= 180) or
             not (12 <= len(reason.encode("utf-8")) <= 500)):
         return False
     # The anchor is a provenance witness, not an approximate paraphrase.  It
@@ -680,6 +691,7 @@ class Crossrule(gl.Contract):
         self._require(room["status"] == "ACTIVE" and self._in_room(room, self._actor()),
                       "room membership required")
         self._require(not self._restricted(int(rid), self._actor()), "posting suspension active")
+        policy = self._active_policy(room)
         if parent_id:
             parent = self._post(parent_id)
             self._require(parent["room_id"] == int(rid), "cross-room reply forbidden")
@@ -689,7 +701,13 @@ class Crossrule(gl.Contract):
         ordinal = room["post_count"]
         self._save(self.posts, pid, {"id": int(pid), "room_id": int(rid), "parent_id": int(parent_id),
             "author": self._actor(), "body": bounded(body, 1200, "post"),
-            "status": "VISIBLE", "case_id": 0, "at": self._now()})
+            "status": "VISIBLE", "case_id": 0, "active_case_id": 0,
+            "challenge_ids": [], "challenged_clauses": [],
+            # A post is governed by the agreement that was active when it was
+            # published.  Opening a case later must never make an amendment
+            # retroactively criminalize an earlier publication.
+            "policy_version": int(room["version"]), "policy": policy,
+            "at": self._now()})
         self.room_post_index[f"{int(rid)}:{ordinal}"] = str(int(pid))
         self._save(self.rooms, rid, room)
         return pid
@@ -701,8 +719,29 @@ class Crossrule(gl.Contract):
         room = self._room(u32(post["room_id"]))
         actor = self._actor()
         self._require(self._in_room(room, actor) and actor != post["author"], "other room member required")
-        self._require(post["case_id"] == 0, "post has already been challenged")
-        policy = self._active_policy(room)
+        challenge_ids = list(post.get("challenge_ids", []))
+        challenged_clauses = list(post.get("challenged_clauses", []))
+        self._require(len(challenge_ids) < MAX_CHALLENGES_PER_POST,
+                      "post challenge limit reached")
+        self._require(clause_id not in challenged_clauses,
+                      "post has already been challenged under this clause")
+        # A terminal upheld breach is final for this publication.  A later
+        # clause cannot be used to create a contradictory second sanction;
+        # reversed findings are represented by the case's current finding and
+        # therefore remain eligible for the bounded serial policy below.
+        for previous_id in challenge_ids:
+            previous_case = self._case(u32(previous_id))
+            self._require(previous_case["finding"] not in ("MINOR_BREACH", "SERIOUS_BREACH"),
+                          "post has an upheld breach")
+        active_case_id = int(post.get("active_case_id", 0))
+        if active_case_id:
+            previous = self._case(u32(active_case_id))
+            self._require(previous["status"] == "CLOSED", "post has an unresolved challenge")
+            self._require(previous["finding"] in ("NO_VIOLATION", "INSUFFICIENT_EVIDENCE"),
+                          "post has an upheld breach")
+        policy = post.get("policy")
+        self._require(isinstance(policy, dict) and int(post.get("policy_version", 0)) > 0,
+                      "post policy snapshot missing")
         self._require(any(x["id"] == clause_id for x in policy["clauses"]), "unknown clause")
         if isinstance(context_json, str):
             bounded(context_json, 120, "context JSON")
@@ -726,13 +765,17 @@ class Crossrule(gl.Contract):
         self._save(self.cases, cid, {"id": int(cid), "post_id": int(pid), "room_id": post["room_id"],
             "author": post["author"], "reporter": actor, "clause_id": bounded(clause_id, 24, "clause ID"),
             "allegation": bounded(allegation, 1200, "allegation"), "post_text": post["body"],
-            "context": context, "policy": policy, "policy_version": room["version"],
+            "context": context, "policy": policy, "policy_version": post["policy_version"],
             "defense": "", "defense_submitted": False,
             "opened_at": self._now(), "defense_due": self._now() + policy["defense_minutes"] * 60,
             "status": "OPEN", "digest": "", "finding": "", "decision": None,
             "original_finding": "", "original_decision": None,
             "appeal_due": 0, "appeal": None})
-        post["case_id"], post["status"] = int(cid), "UNDER_REVIEW"
+        challenge_ids.append(int(cid))
+        challenged_clauses.append(clause_id)
+        post["case_id"], post["active_case_id"] = int(cid), int(cid)
+        post["challenge_ids"], post["challenged_clauses"] = challenge_ids, challenged_clauses
+        post["status"] = "UNDER_REVIEW"
         self._save(self.posts, pid, post)
         return cid
 
@@ -787,16 +830,13 @@ class Crossrule(gl.Contract):
         raw = self.restrictions.get(key, "")
         previous = json.loads(raw) if raw else []
         existing = next((r for r in previous if r["case_id"] == case["id"]), None)
-        self._require(isinstance(previous, list) and len(previous) <= MAX_ACTIVE_RESTRICTIONS,
-                      "restriction index corrupted")
+        self._require(isinstance(previous, list), "restriction index corrupted")
         previous = [r for r in previous
                     if r["case_id"] != case["id"] and r["until"] > self._now()]
         if finding == "SERIOUS_BREACH":
             until = (existing["until"] if existing else
                      self._now() + case["policy"]["suspension_minutes"] * 60)
             if until > self._now():
-                self._require(len(previous) < MAX_ACTIVE_RESTRICTIONS or existing is not None,
-                              "active restriction capacity reached")
                 previous.append({"case_id": case["id"], "until": until})
         self.restrictions[key] = self._dump(previous)
         maximum = 0
@@ -866,6 +906,9 @@ class Crossrule(gl.Contract):
         self._apply_decision(case, decision)
         case["appeal"]["decision"], case["appeal"]["status"] = decision, "DECIDED"
         case["status"] = "CLOSED"
+        post = self._post(u32(case["post_id"]))
+        post["active_case_id"] = 0
+        self._save(self.posts, u32(case["post_id"]), post)
         self._save(self.cases, cid, case)
 
     @gl.public.write
@@ -874,6 +917,9 @@ class Crossrule(gl.Contract):
         self._require(case["status"] == "DECIDED" and self._now() > case["appeal_due"],
                       "case appeal period still open")
         case["status"] = "CLOSED"
+        post = self._post(u32(case["post_id"]))
+        post["active_case_id"] = 0
+        self._save(self.posts, u32(case["post_id"]), post)
         self._save(self.cases, cid, case)
 
     @gl.public.view

@@ -705,6 +705,75 @@ class CrossruleLifecycle(unittest.TestCase):
             self.contract.adjudicate_case(cid)
             self.assertEqual(self.record(self.contract.get_case(cid))['finding'],'NO_VIOLATION')
 
+    def test_long_posts_reject_trivial_single_byte_anchor(self):
+        self.assertFalse(module.valid_finding(
+            finding(anchor='x'), 'PROMO', 'A long x publication with more than one clause-relevant sentence.'))
+        self.assertTrue(module.valid_finding(
+            finding(anchor='clause-relevant sentence'), 'PROMO',
+            'A long publication with more than one clause-relevant sentence.'))
+
+    def test_policy_is_frozen_on_publication_not_case_open(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        published=self.record(self.contract.get_post(pid))
+        self.assertEqual(published['policy_version'],1)
+        self.actor(0)
+        self.contract.propose_amendment(rid,'A later policy',CLAUSES,2,2,2,2)
+        self.actor(3)
+        self.contract.consent_room(rid)
+        for slot in (0,1,3,4):
+            self.actor(slot)
+            self.contract.vote_agreement(rid,True)
+        self.contract.finalize_agreement(rid)
+        self.actor(3)
+        cid=self.contract.open_case(pid,'PROMO','A post-publication challenge.','[]')
+        case=self.record(self.contract.get_case(cid))
+        self.assertEqual(case['policy_version'],1)
+        self.assertEqual(case['policy'],published['policy'])
+
+    def test_clause_aware_serial_challenges_prevent_first_reporter_capture(self):
+        rid=self.room()
+        self.actor(0)
+        pid=self.contract.publish_post(rid,0,POST)
+        self.actor(3)
+        first=self.contract.open_case(pid,'PROMO','First reporter selects one clause.','[]')
+        self.clock=self.record(self.contract.get_case(first))['defense_due']+1
+        self.contract.freeze_case(first)
+        self.mock(finding('NO_VIOLATION','PROMO'),finding('NO_VIOLATION','PROMO'))
+        self.contract.adjudicate_case(first)
+        self.clock=self.record(self.contract.get_case(first))['appeal_due']+1
+        self.contract.close_case(first)
+        self.actor(4)
+        second=self.contract.open_case(pid,'EVIDENCE','A distinct clause remains reportable.','[]')
+        post=self.record(self.contract.get_post(pid))
+        self.assertEqual(post['challenge_ids'],[first,second])
+        self.assertEqual(post['challenged_clauses'],['PROMO','EVIDENCE'])
+        with self.assertRaisesRegex(UserError,'already been challenged under this clause'):
+            self.contract.open_case(pid,'EVIDENCE','Duplicate clause report.','[]')
+
+    def test_upheld_breach_blocks_later_clause_challenge(self):
+        rid,pid,cid=self.frozen_case('PROMO')
+        self.mock(finding('MINOR_BREACH','PROMO'),finding('MINOR_BREACH','PROMO'))
+        self.contract.adjudicate_case(cid)
+        self.clock=self.record(self.contract.get_case(cid))['appeal_due']+1
+        self.contract.close_case(cid)
+        self.actor(4)
+        with self.assertRaisesRegex(UserError,'upheld breach'):
+            self.contract.open_case(pid,'EVIDENCE','Contradictory second report.','[]')
+
+    def test_restriction_index_accepts_more_than_32_current_cases(self):
+        rid,_,cid=self.frozen_case(suspension=10)
+        key=self.contract._restriction_key(rid,self.wallets[0])
+        seeded=[{'case_id':1000+i,'until':self.clock+600+i} for i in range(32)]
+        self.contract.restrictions[key]=self.contract._dump(seeded)
+        self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
+        self.contract.adjudicate_case(cid)
+        current=self.record(self.contract.get_restriction(rid,self.wallets[0]))
+        self.assertTrue(current['suspended'])
+        self.assertEqual(len(current['entries']),33)
+        self.assertEqual(current['entries'][-1]['case_id'],cid)
+
     def test_current_restriction_lookup_does_not_read_case_history(self):
         rid,pid,cid=self.frozen_case()
         self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))

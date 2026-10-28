@@ -108,9 +108,9 @@ MUTATIONS = [
     ("approved_expiry_terminal_transition", "test_approved_ballot_expiry_cannot_overturn_ratification",
      "vote = room[\"vote\"]\n        passed = self._approved(vote)\n        if passed:",
      "vote = room[\"vote\"]\n        passed = False\n        if passed:"),
-    ("short_anchor_floor", "test_short_posts_have_adjudicable_full_post_anchors",
-     "not (1 <= len(anchor.encode(\"utf-8\")) <= 180)",
-     "not (8 <= len(anchor.encode(\"utf-8\")) <= 180)"),
+    ("short_anchor_floor", "test_long_posts_reject_trivial_single_byte_anchor",
+     "minimum_anchor = 1 if post_bytes <= MAX_LONG_ANCHOR_BYTES else MAX_LONG_ANCHOR_BYTES",
+     "minimum_anchor = 1"),
     ("post_continuation", "test_room_posts_continue_beyond_150_and_pages_are_bounded",
      "room[\"post_count\"] += 1",
      "room[\"post_count\"] += 0"),
@@ -118,14 +118,23 @@ MUTATIONS = [
      "self.room_post_index[f\"{int(rid)}:{ordinal}\"] = str(int(pid))",
      "self.room_post_index[f\"{int(rid)}:{ordinal}\"] = \"999999\""),
     ("challenge_finality", "test_restoration_does_not_reopen_challenge_or_restore_feature",
-     "self._require(post[\"case_id\"] == 0, \"post has already been challenged\")",
-     "self._require(True, \"post has already been challenged\")"),
+     "self._require(clause_id not in challenged_clauses,\n                      \"post has already been challenged under this clause\")",
+     "self._require(True, \"post has already been challenged under this clause\")"),
     ("validator_leader_context", "test_validator_prompt_contains_untrusted_leader_proposal",
      "independent = assess(evidence, appeal, proposed)",
      "independent = assess(evidence, appeal)"),
     ("feature_removed_on_moderation", "test_restoration_does_not_reopen_challenge_or_restore_feature",
      "if post[\"status\"] == \"HIDDEN\" and room[\"featured_post\"] == post[\"id\"]:\n            room[\"featured_post\"] = 0",
      "if post[\"status\"] == \"HIDDEN\" and room[\"featured_post\"] == post[\"id\"]:\n            room[\"featured_post\"] = post[\"id\"]"),
+    ("publication_policy_snapshot", "test_policy_is_frozen_on_publication_not_case_open",
+     "\"policy_version\": int(room[\"version\"]), \"policy\": policy,",
+     "\"policy_version\": int(room[\"version\"]) + 1, \"policy\": policy,"),
+    ("upheld_breach_finality", "test_upheld_breach_blocks_later_clause_challenge",
+     "self._require(previous_case[\"finding\"] not in (\"MINOR_BREACH\", \"SERIOUS_BREACH\"),\n                          \"post has an upheld breach\")",
+     "self._require(True, \"post has an upheld breach\")"),
+    ("restriction_capacity", "test_restriction_index_accepts_more_than_32_current_cases",
+     "self._require(isinstance(previous, list), \"restriction index corrupted\")",
+     "self._require(len(previous) < 32, \"restriction capacity reached\")"),
 ]
 
 
@@ -152,4 +161,4 @@ class SecurityMutations(unittest.TestCase):
         survivors=[name for name,status,_ in results if status=="survived"]
         print("MUTATION_REPORT=" + json.dumps(results, sort_keys=True))
         self.assertFalse(survivors, f"dangerous mutations survived: {survivors}; results={results}")
-        self.assertEqual(len(results),31)
+        self.assertEqual(len(results),34)
