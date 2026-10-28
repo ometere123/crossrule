@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS: '0x673aF6595dA79799D86A8C0467D51088d9C935d4'
+      NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS: '0x52216B878474b97897b3878071eBF92DB42cd0E0'
     defaults:
       run:
         working-directory: frontend

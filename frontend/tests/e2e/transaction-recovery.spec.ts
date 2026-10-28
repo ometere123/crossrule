@@ -1,10 +1,11 @@
 import {test,expect} from '@playwright/test';
 
-const CONTRACT='0x673aF6595dA79799D86A8C0467D51088d9C935d4';
+const CONTRACT=process.env.NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS??'';
 const WALLET='0x'+'2'.repeat(40);
 const HASH='0x'+'c'.repeat(64);
 const args: [string,string,string,string,string,number]=['Recovery Guild','A deterministic recovery test community.','A public test charter.', '0x'+'3'.repeat(40), '0x'+'4'.repeat(40), 5];
 
+test.skip(Boolean(process.env.PLAYWRIGHT_BASE_URL),'storage-recovery harness runs against the local app; production testing covers public reads and mocked wallet flows');
 test('an unresolved write lock survives refresh and blocks only the same action',async({page})=>{
   await page.addInitScript(({contract,wallet,hash,pendingArgs})=>{
     let accounts=[wallet];
