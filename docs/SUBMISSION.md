@@ -39,7 +39,7 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Frontend: [crossrule.vercel.app](https://crossrule.vercel.app)
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
 * Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0x673aF6595dA79799D86A8C0467D51088d9C935d4)
-* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468)
+* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x82a04058051e61992916349ccdfde96c24d703ac09d4e1c16fe5d0c3dfb9f820)
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)

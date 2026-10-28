@@ -27,7 +27,7 @@ This document is the operational handoff for the verified source, StudioNet depl
 * Source parity: `gen_getContractCode` returned 56,884 bytes that matched `contracts/Crossrule.py` byte-for-byte; SHA-256 `d4506d35a81b79c44190b6b0e91401c83e640f4b32bea226531fd246332d1d04`
 * Deployed contract source commit: `12427cd5bd828fd6c8d9eb282fce797014d87934`
 * Full ledger: [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
-* Live readback: communities 4 total (three active plus one browser-created `FOUNDING` record), one active room, posts 6, cases 4; the room preserves policy versions 1–3; case 4 closed after an upheld `SERIOUS_BREACH` appeal without restarting its original restriction clock.
+* Live readback: communities 2 active, one active room, posts 4 and cases 2; policy versions 1–2 are preserved; case 2 closed after an upheld `MINOR_BREACH` appeal. The earlier four-community/six-post/four-case record is retained only as historical evidence for a superseded deployment.
 
 ## Final engineer's non-optional checks
 
@@ -38,7 +38,7 @@ This document is the operational handoff for the verified source, StudioNet depl
 - Inspect frontend for every actionable call and read signature; test connected and disconnected provider behavior, chain switching, finalized receipt parsing, bad RPC/timeout, mobile ergonomics, accessibility, and content safety.
 - Deploy exactly the reviewed **single contract source** to StudioNet; this is complete for the address and deployment transaction above. The source parity check uses `gen_getContractCode`, decodes the returned base64 bytes and compares them directly against the LF repository source. The historical deployment's CRLF mismatch remains documented as historical evidence; it is not the current deployment.
 - Configure only `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` in Vercel. The current production alias is configured with `0x673aF6595dA79799D86A8C0467D51088d9C935d4` and was rechecked after the READY deployment.
-- Execute and archive genuine positive and negative multi-wallet lifecycle evidence in `docs/LIVE_EVIDENCE.md` or via verifiable links with identities and links, never secret keys. This is complete for the current deployment, including counterpart consent, feature/unfeature, three policy versions, six posts, four semantic cases, two application appeals and finalized negative controls; preserve the six encrypted CLI keystores.
+- Execute and archive genuine positive and negative multi-wallet lifecycle evidence in `docs/LIVE_EVIDENCE.md` or via verifiable links with identities and links, never secret keys. This is complete for the current deployment, including counterpart consent, feature/unfeature, policy amendment, two semantic cases, one application appeal and finalized negative controls; preserve the six encrypted CLI keystores. The current corrected deployment does not claim a successful charter amendment or current-contract browser signature.
 - Do not claim a network-level finality or validator decision if it is a local mock, pending receipt or UI-only transaction.
 - Verify all application timers can be chosen from the frontend; explain why network consensus/finality timing is external.
 - Produce final acceptance report mapping concrete evidence to the four 5/5/5/5 target axes, including remaining risks and the external reviewer outcome when available. Do not self-award the Portal score.

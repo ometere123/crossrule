@@ -139,7 +139,9 @@ test.describe('deterministic signed governance and moderation workflow',()=>{
     await page.getByLabel("Author's formal defense").fill('The post is a synthetic public test record.');
     await page.getByRole('button',{name:'Submit defense'}).press('Enter');
     await expect(page.getByText(/submit defense finalized successfully/)).toBeVisible();
-    await page.getByRole('button',{name:'Freeze after deadline'}).click({force:true});
+    const freezeCase=page.getByRole('button',{name:'Freeze after deadline'});
+    await expect(freezeCase).toBeEnabled();
+    await freezeCase.press('Enter');
     await expect(page.getByText(/freeze case finalized successfully/)).toBeVisible();
     await page.getByRole('button',{name:'Request GenLayer adjudication'}).press('Enter');
     await expect(page.getByText('Consensus-backed ruling')).toBeVisible();
@@ -152,7 +154,9 @@ test.describe('deterministic signed governance and moderation workflow',()=>{
     await page.getByLabel('Opposing party response').fill('The author response is recorded.');
     await page.getByRole('button',{name:'Respond to appeal'}).press('Enter');
     await expect(page.getByText(/submit appeal response finalized successfully/)).toBeVisible();
-    await page.getByRole('button',{name:'Freeze after deadline'}).click({force:true});
+    const freezeAppeal=page.getByRole('button',{name:'Freeze after deadline'});
+    await expect(freezeAppeal).toBeEnabled();
+    await freezeAppeal.press('Enter');
     await expect(page.getByText(/freeze appeal finalized successfully/)).toBeVisible();
     await page.getByRole('button',{name:'Request appeal adjudication'}).press('Enter');
     await expect(page.getByText('This application case is closed.')).toBeVisible();

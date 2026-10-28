@@ -45,7 +45,7 @@ The prior browser-signed registration belongs to a superseded deployment and rem
 
 This top section is the current release record. Earlier sections below are retained and explicitly labelled historical/superseded; they must not be used as evidence for the current address.
 
-## Current source-matched StudioNet deployment
+## Historical source-matched StudioNet deployment (superseded)
 
 | Field | Observed value |
 | --- | --- |
@@ -87,11 +87,11 @@ The six encrypted CLI keystores remain preserved locally and were not imported i
 
 The extra admission applicant was `party_b`, `0xa7eeae0e93793e3146cb14b0700251b8b0ebadfb`.
 
-## Current browser-wallet verification
+## Historical browser-wallet verification (superseded deployment)
 
-The Convert Chrome profile used the injected EIP-1193 wallet at `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b` to submit `create_community` against the current contract. The synthetic public record `Browser Wallet Verification` was finalized with successful contract execution: [transaction `0x6bde462e5ef93055abb096ddb3dd1453b9bb38138883eed46baa54284a950c0c`](https://explorer-studio.genlayer.com/tx/0x6bde462e5ef93055abb096ddb3dd1453b9bb38138883eed46baa54284a950c0c). The production UI read back community 4 in `FOUNDING` state with the supplied founder B/C addresses; the two required founder consents remain outstanding. No CLI key was imported into the browser.
+The Convert Chrome profile used the injected EIP-1193 wallet at `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b` to submit `create_community` against a superseded deployment. The synthetic public record `Browser Wallet Verification` was finalized with successful contract execution: [historical transaction `0x6bde462e5ef93055abb096ddb3dd1453b9bb38138883eed46baa54284a950c0c`](https://explorer-studio.genlayer.com/tx/0x6bde462e5ef93055abb096ddb3dd1453b9bb38138883eed46baa54284a950c0c). It must not be used as current-contract browser evidence. No CLI key was imported into the browser.
 
-## Fresh lifecycle on the current contract
+## Historical fresh lifecycle on the superseded deployment
 
 All successful rows below were signed by the named CLI identity, finalized on StudioNet, classified from the authoritative receipt and checked against contract readback. Finalized rollback receipts are retained as negative evidence and are not described as rejected signatures.
 
@@ -229,7 +229,7 @@ This section is a superseded pre-hardening deployment record retained for histor
 | Production browser wallet | Convert Chrome profile with Rabby injected provider. No CLI key was imported into the browser. A real browser-signed community registration was finalized successfully below; the subsequent founder-consent lifecycle remains in progress. |
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; all three list views returned `[]` |
 
-### Fresh browser-wallet verification
+### Historical fresh browser-wallet verification (superseded deployment)
 
 This is a new public record appended to the existing source-matched contract. It is intentionally separate from the completed six-CLI-wallet ledger below. The browser wallet signed the transaction through the Convert Chrome profile; no private key was imported into the page.
 
