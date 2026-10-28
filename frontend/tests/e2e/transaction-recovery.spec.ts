@@ -24,8 +24,11 @@ test('an unresolved write lock survives refresh and blocks only the same action'
       submittedAt:Date.now()
     }]));
   },{contract:CONTRACT,wallet:WALLET,hash:HASH,pendingArgs:args});
-  await page.goto('/',{waitUntil:'domcontentloaded'});
-  await page.getByRole('button',{name:'Create a community',exact:true}).first().click();
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:/One shared space/})).toBeVisible();
+  await page.waitForTimeout(1000);
+  await page.getByRole('button',{name:'Communities',exact:true}).click();
+  await page.getByRole('button',{name:'Create community',exact:true}).last().click();
   await expect(page.getByRole('heading',{name:'Found a community'})).toBeVisible();
   await page.getByLabel('Community name').fill(args[0]);
   await page.getByLabel('Description').fill(args[1]);
@@ -33,8 +36,11 @@ test('an unresolved write lock survives refresh and blocks only the same action'
   await page.getByLabel('Founding wallet B').fill(args[3]);
   await page.getByLabel('Founding wallet C').fill(args[4]);
   await expect(page.getByRole('button',{name:'Register community'})).toBeDisabled();
-  await page.reload({waitUntil:'domcontentloaded'});
-  await page.getByRole('button',{name:'Create a community',exact:true}).first().click();
+  await page.reload();
+  await expect(page.getByRole('heading',{name:/One shared space/})).toBeVisible();
+  await page.waitForTimeout(1000);
+  await page.getByRole('button',{name:'Communities',exact:true}).click();
+  await page.getByRole('button',{name:'Create community',exact:true}).last().click();
   await expect(page.getByRole('heading',{name:'Found a community'})).toBeVisible();
   await page.getByLabel('Community name').fill(args[0]);
   await page.getByLabel('Description').fill(args[1]);
