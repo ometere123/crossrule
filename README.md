@@ -31,7 +31,7 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Contract | `0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab` |
 | Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab) |
 | Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468) |
-| Latest full GitHub CI | The final successful run is recorded in [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) and the release report |
+| Latest full GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40684788894) at code-bearing release commit `487faeffca20c2e2c139274eee473245023ae809` |
 | Source | SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2`, contract-source commit `21e5af60ac116b31a7d6fa53034a85303f28cecf` |
 | Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (49,865 bytes) |
 

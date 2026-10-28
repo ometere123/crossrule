@@ -43,7 +43,7 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Latest full CI: the final successful run for the release commit is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) and the closeout report.
+* Latest full CI for the code-bearing release: [run 40684788894](https://github.com/ometere123/crossrule/actions/runs/40684788894), 9/9 jobs successful at `487faeffca20c2e2c139274eee473245023ae809`; the final docs/workflow metadata commit is validated by the newer run in the closeout report.
 
 ## Production UI evidence
 

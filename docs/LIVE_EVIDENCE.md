@@ -18,6 +18,7 @@ This top section is the current release record. Earlier sections below are retai
 | Repository source | 49,865 LF bytes; SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2` |
 | Decoded deployed source | 49,865 bytes; SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2` |
 | Exact parity | `byteEqual: true`, verified by `scripts/verify_deployed_source.mjs` using `gen_getContractCode` |
+| GitHub CI | [9/9 jobs successful](https://github.com/ometere123/crossrule/actions/runs/40684788894) at code-bearing release commit `487faeffca20c2e2c139274eee473245023ae809` |
 | Frontend | [https://crossrule.vercel.app](https://crossrule.vercel.app), READY production deployment [`dpl_9ZVwixDHKntpaEYQJ4C7HkAD5jRJ`](https://vercel.com/delealufejoel-4184s-projects/crossrule/9ZVwixDHKntpaEYQJ4C7HkAD5jRJ), built from local release commit `1a963f027323b10ea363595138156a0dce952768` |
 
 The exact parity command was:
