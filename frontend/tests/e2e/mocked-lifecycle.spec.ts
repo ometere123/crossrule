@@ -85,7 +85,7 @@ async function installMock(page:Page,state:MockState){
       const call=decodeCall(body.params?.[0]?.data);const encoded=bytesToHex(abi.calldata.encode(JSON.stringify(readValue(state,call.method,call.args))));
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:body.id,result:{data:encoded.slice(2)}})});
     }
-    if(body.method==='gen_getTransaction'||body.method==='eth_getTransactionByHash'||body.method==='eth_getTransactionReceipt')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:body.id,result:{hash:String(body.params?.[0]??''),status:'FINALIZED',result:'MAJORITY_AGREE',txExecutionResult:'FINISHED_WITH_RETURN'}})});
+    if(body.method==='gen_getTransaction'||body.method==='gen_getTransactionReceipt'||body.method==='eth_getTransactionByHash'||body.method==='eth_getTransactionReceipt')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:body.id,result:{hash:String(body.params?.[0]??''),status:'FINALIZED',result:'MAJORITY_AGREE',txExecutionResult:'FINISHED_WITH_RETURN'}})});
     if(body.method==='eth_getTransactionCount'||body.method==='eth_estimateGas'||body.method==='eth_gasPrice')return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({jsonrpc:'2.0',id:body.id,result:'0x0'})});
     return route.continue();
   });
@@ -112,7 +112,7 @@ async function installMock(page:Page,state:MockState){
 }
 
 test.describe('deterministic signed governance and moderation workflow',()=>{
-  test.skip(!CONTRACT,'requires the configured contract build used by the browser CI job');
+  test.skip(!CONTRACT||Boolean(process.env.PLAYWRIGHT_BASE_URL),'requires the configured local contract build; mocked lifecycle is not production evidence');
   test('persists sequential write state across roles and appellate closure',async({page})=>{
     const state=makeState();await installMock(page,state);await page.goto('/');
     await page.getByRole('button',{name:'Connect wallet'}).click();
