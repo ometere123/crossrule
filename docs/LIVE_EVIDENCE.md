@@ -44,6 +44,10 @@ The six encrypted CLI keystores remain preserved locally and were not imported i
 
 The extra admission applicant was `party_b`, `0xa7eeae0e93793e3146cb14b0700251b8b0ebadfb`.
 
+## Current browser-wallet verification
+
+The Convert Chrome profile used the injected EIP-1193 wallet at `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b` to submit `create_community` against the current contract. The synthetic public record `Browser Wallet Verification` was finalized with successful contract execution: [transaction `0x6bde462e5ef93055abb096ddb3dd1453b9bb38138883eed46baa54284a950c0c`](https://explorer-studio.genlayer.com/tx/0x6bde462e5ef93055abb096ddb3dd1453b9bb38138883eed46baa54284a950c0c). The production UI read back community 4 in `FOUNDING` state with the supplied founder B/C addresses; the two required founder consents remain outstanding. No CLI key was imported into the browser.
+
 ## Fresh lifecycle on the current contract
 
 All successful rows below were signed by the named CLI identity, finalized on StudioNet, classified from the authoritative receipt and checked against contract readback. Finalized rollback receipts are retained as negative evidence and are not described as rejected signatures.
@@ -65,7 +69,7 @@ All successful rows below were signed by the named CLI identity, finalized on St
 
 ## Final authoritative readback
 
-At the final lifecycle read, `get_counts` returned `{"communities":3,"rooms":1,"posts":6,"cases":4}`. Room 1 was `ACTIVE`, policy version 3, with versions 1–3 preserved and no featured post. Post 1 remained `VISIBLE` under publication-time policy v1 with one challenge; post 4 was hidden under serious case 2; post 5 was hidden under appealed serious case 3 with its restriction expired; post 6 was hidden under case 4 with the original/appellate serious findings preserved and its original restriction expiry unchanged. Case 1 was `CLOSED/NO_VIOLATION`; cases 2–4 were terminal and their evidence/digests remained readable. The current browser wallet registration described in the superseded section below is not evidence for this current contract.
+At the final current-contract read, `get_counts` returned `{"communities":4,"rooms":1,"posts":6,"cases":4}`. Communities 1–3 are active; community 4 is the browser-created `FOUNDING` record. Room 1 was `ACTIVE`, policy version 3, with versions 1–3 preserved and no featured post. Post 1 remained `VISIBLE` under publication-time policy v1 with one challenge; post 4 was hidden under serious case 2; post 5 was hidden under appealed serious case 3 with its restriction expired; post 6 was hidden under case 4 with the original/appellate serious findings preserved and its original restriction expiry unchanged. Case 1 was `CLOSED/NO_VIOLATION`; cases 2–4 were terminal and their evidence/digests remained readable.
 
 ## Observable semantic-consensus evidence
 

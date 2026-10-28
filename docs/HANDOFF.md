@@ -27,7 +27,7 @@ This document is the operational handoff for the verified source, StudioNet depl
 * Source parity: `gen_getContractCode` returned 49,865 bytes that matched `contracts/Crossrule.py` byte-for-byte; SHA-256 `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2`
 * Deployed contract source commit: `21e5af60ac116b31a7d6fa53034a85303f28cecf`
 * Full ledger: [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
-* Live readback: communities 3, one active room, posts 6, cases 4; the room preserves policy versions 1–3; case 4 closed after an upheld `SERIOUS_BREACH` appeal without restarting its original restriction clock.
+* Live readback: communities 4 total (three active plus one browser-created `FOUNDING` record), one active room, posts 6, cases 4; the room preserves policy versions 1–3; case 4 closed after an upheld `SERIOUS_BREACH` appeal without restarting its original restriction clock.
 
 ## Final engineer's non-optional checks
 
