@@ -38,9 +38,9 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 
 * Frontend: [crossrule.vercel.app](https://crossrule.vercel.app)
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
-* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0x673aF6595dA79799D86A8C0467D51088d9C935d4)
-* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x82a04058051e61992916349ccdfde96c24d703ac09d4e1c16fe5d0c3dfb9f820)
-* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
+* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0x52216B878474b97897b3878071eBF92DB42cd0E0)
+* Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x85afe80786dceecf32a3536f2ede30d29cd48f12be3dc621a3472de728950495)
+* Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), READY deployment `dpl_cTpND7kgGZdx3CiEMJsQ9DyPVYNL`, configured for the replacement contract
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
 * Latest full CI: the final successful run for the pushed release commit is linked from [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) and the closeout report.
@@ -55,7 +55,7 @@ The public Accord Chamber interface was inspected at `https://crossrule.vercel.a
 2. Read `contracts/Crossrule.py` and confirm there is exactly one contract and no owner/admin/upgrade path.
 3. Inspect the deployment receipt and source-parity record in `docs/LIVE_EVIDENCE.md`.
 4. In Direct Mode, run the adversarial tests for false classifications, invalid anchors, forged context, digest tampering, severity caps and appeals.
-5. Follow the completed six-wallet StudioNet sequence and exact readbacks in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). The page is a presentation layer; the explorer and contract views are the authority.
+5. Treat the six-wallet sequences in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) as historical unless a row explicitly names the current address `0x52216B878474b97897b3878071eBF92DB42cd0E0`. The page is a presentation layer; the explorer and contract views are the authority.
 
 ## Known limitations
 

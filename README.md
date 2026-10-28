@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the hardened source is pushed to `main`, the corrected contract is deployed to StudioNet, the fresh lifecycle was executed with six distinct CLI identities, and the Accord Chamber frontend is live on Vercel. The current corrected deployment has two active communities, one active bilateral room, four stable post IDs, two semantic cases (including one appeal), and finalized negative permission controls. The earlier browser-signed record belongs to a superseded deployment; no current-contract browser signature is claimed because the Convert Chrome tab could not be safely claimed by the automation bridge. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact receipts, readbacks and limitations.
+**Current release status:** the final hardening source is pushed to `main`, the corrected contract is deployed to StudioNet with exact source parity, and the Accord Chamber frontend is live on Vercel. The replacement deployment was verified with empty initial state; the earlier six-wallet lifecycle and browser signature remain explicitly historical evidence for superseded deployments. A current-contract Convert Chrome signature is not claimed until the user-approved wallet prompt produces a receipt and readback. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact provenance, tests, receipts and limitations.
 
 ## Exact stack
 
@@ -27,19 +27,19 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Item | Value |
 | --- | --- |
 | Frontend | [crossrule.vercel.app](https://crossrule.vercel.app) — public Accord Chamber landing page |
-| Vercel deployment | [READY `dpl_9m4y5WSkEEF3RaZvm2RJ1JcsFZTP`](https://vercel.com/delealufejoel-4184s-projects/crossrule/9m4y5WSkEEF3RaZvm2RJ1JcsFZTP), alias [crossrule.vercel.app](https://crossrule.vercel.app), built from the corrected frontend |
-| Contract | `0x673aF6595dA79799D86A8C0467D51088d9C935d4` |
-| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0x673aF6595dA79799D86A8C0467D51088d9C935d4) |
-| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0x82a04058051e61992916349ccdfde96c24d703ac09d4e1c16fe5d0c3dfb9f820) |
-| Latest full GitHub CI | Updated after this release commit; see the final report and workflow run linked from [`LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) |
-| Source | SHA-256 `d4506d35a81b79c44190b6b0e91401c83e640f4b32bea226531fd246332d1d04`, contract-source commit `12427cd5bd828fd6c8d9eb282fce797014d87934` |
-| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (49,865 bytes) |
+| Vercel deployment | [READY `dpl_cTpND7kgGZdx3CiEMJsQ9DyPVYNL`](https://vercel.com/delealufejoel-4184s-projects/crossrule/cTpND7kgGZdx3CiEMJsQ9DyPVYNL), alias [crossrule.vercel.app](https://crossrule.vercel.app) |
+| Contract | `0x52216B878474b97897b3878071eBF92DB42cd0E0` |
+| Contract explorer | [StudioNet address](https://explorer-studio.genlayer.com/address/0x52216B878474b97897b3878071eBF92DB42cd0E0) |
+| Deployment | [FINALIZED deployment transaction](https://explorer-studio.genlayer.com/tx/0x85afe80786dceecf32a3536f2ede30d29cd48f12be3dc621a3472de728950495) |
+| Latest full GitHub CI | The final successful run for the release SHA is linked from [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) |
+| Source | SHA-256 `bd7af33a291f9c3d26d36422cf4f0cdc1dd9ef63454b50d7a4e48e1b7901c104`, contract-source commit `bb614994ea4f4d2235ef18dc01437b51e31e3197` |
+| Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (57,518 bytes) |
 
-The live StudioNet readback after the fresh corrected-contract demonstration lifecycle is communities `2` (`ACTIVE`), room records `1` (`ACTIVE`), posts `4`, cases `2`. The active room preserves policy versions 1–2. Case 1 is a closed `NO_VIOLATION` under policy v1; case 2 is a `MINOR_BREACH` with an independently adjudicated upheld appeal under the publication-time policy snapshot. Finalized outsider and duplicate-clause controls are retained; the older four-community/six-post/four-case record remains historical only.
+The replacement contract's immediate StudioNet readback is empty: `get_counts = {communities:0, rooms:0, posts:0, cases:0}`, with empty community, room and case lists. Existing lifecycle records below are historical and are not represented as state on this replacement address.
 
 The production Accord Chamber was checked at 1440, 1280, 1024, 768, 390 and 375 CSS pixels with no horizontal overflow, no page errors and no console errors. Representative captures: [desktop hero](docs/screenshots/accord-hero-1440.png), [mobile hero](docs/screenshots/accord-hero-390.png), and [full desktop page](docs/screenshots/accord-1440.png).
 
-The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22. The READY production deployment above was verified at the public alias and reads the corrected contract state: 2 communities, 2 room records, 2 cases and 4 posts after the fresh lifecycle.
+The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22. The READY production deployment above was checked at the public alias and is configured for the replacement address; its public records are therefore empty until a fresh authorized lifecycle is executed.
 
 ## Product in one story
 

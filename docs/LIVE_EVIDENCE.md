@@ -1,6 +1,29 @@
 # CROSSRULE final hardening live evidence ledger
 
-## Current corrected release — authoritative section
+## Final current release — authoritative section
+
+This is the current source-matched deployment. It supersedes every earlier address and lifecycle below; historical rows remain for audit context and are not current-contract evidence.
+
+| Field | Observed value |
+| --- | --- |
+| Network | GenLayer StudioNet, chain `61999` |
+| RPC | `https://studio.genlayer.com/api` |
+| CLI / SDK | repository-local `genlayer@0.39.1` / `genlayer-js@1.1.8` |
+| Contract | [0x52216B878474b97897b3878071eBF92DB42cd0E0](https://explorer-studio.genlayer.com/address/0x52216B878474b97897b3878071eBF92DB42cd0E0) |
+| Deployment transaction | [0x85afe80786dceecf32a3536f2ede30d29cd48f12be3dc621a3472de728950495](https://explorer-studio.genlayer.com/tx/0x85afe80786dceecf32a3536f2ede30d29cd48f12be3dc621a3472de728950495) |
+| Deployment result | `FINALIZED`, `MAJORITY_AGREE`, leader execution `SUCCESS`; validator participation metadata exposed by the CLI receipt |
+| Contract source commit | `bb614994ea4f4d2235ef18dc01437b51e31e3197` |
+| Repository source | 57,518 LF bytes; SHA-256 `bd7af33a291f9c3d26d36422cf4f0cdc1dd9ef63454b50d7a4e48e1b7901c104` |
+| Decoded deployed source | 57,518 bytes; SHA-256 `bd7af33a291f9c3d26d36422cf4f0cdc1dd9ef63454b50d7a4e48e1b7901c104` |
+| Exact parity | `byteEqual: true`, checked with `scripts/verify_deployed_source.mjs` via `gen_getContractCode` |
+| Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; community, room and case lists were empty |
+| Production frontend | [crossrule.vercel.app](https://crossrule.vercel.app), READY deployment [`dpl_cTpND7kgGZdx3CiEMJsQ9DyPVYNL`](https://vercel.com/delealufejoel-4184s-projects/crossrule/cTpND7kgGZdx3CiEMJsQ9DyPVYNL), configured for the current address |
+| Current browser-wallet evidence | Not claimed yet. A current-contract Convert Chrome signature requires a user-approved prompt followed by receipt and state readback. |
+| Current six-wallet lifecycle | Not claimed yet. The lifecycle rows below belong to superseded deployments unless explicitly labelled otherwise. |
+
+The deployment receipt proves deployment consensus and successful leader execution. It is not semantic moderation evidence. Current-contract application records must be appended only after genuine StudioNet transactions and readbacks.
+
+## Historical corrected release — superseded
 
 This section supersedes all older “current” blocks below. Older deployments, browser writes and lifecycle records remain historical evidence only.
 
@@ -35,9 +58,9 @@ The six CLI identities were distinct and their encrypted keystores remain preser
 | Case 2 + appeal | open `0xb1051934f93d4211630ae4f910c9966a135e8cf185ccf24464c18833dcda4bc3`; defense `0xe6679c5572500a78927a4ae66fb535d6a8082e86a196be57236bb5cf0b521eee`; freeze `0xce773efca679487bca45b2997b82f026a10ffc70da9c6f8c58d94e84ac437486`; adjudicate `0x1367998639ea9132a94ab969b10b8fab99b55e9a7ce7035b15fe224a2727267d`; appeal `0xdb7beeb1ba7303a032027da22371fc81b797f866bb6db95ca55d789fb6393f36`; response `0x3c8a532d7a24f22ff4a59339d1ecf2699fb5e566b100dc140718769c9edeacd1`; freeze `0x48abbb852694c233e18056dc063a5d9dda4e44f272a6bc781068587d01d54527`; appellate adjudication `0xe9ed5563c036eb601764fa7f99f6b0f7942e4050933b3a09ec25ea31a43df21d` | Original digest `0c02469f4bd749dc86f33f713e4f48ed60bc2db140cd7cefeb54be2b2bcf5d75`; appeal digest `8221bdf85fa3f25a88d830239e90ea2596d4c099a55f715eeb70b99805172ba2`; original and appellate `MINOR_BREACH`; post 4 remains hidden; case closed |
 | Negative controls | outsider publish `0x4e70e108cbf6fa9ed0952ec4c54c6a8817e2a069feb4ba36194952c3a14106bc`; duplicate-clause challenge `0xa25b4dc9f1424885a7d7217ba9ba438c224767fcf8fa400a888ad1b0b03e7d5f`; earlier CLI argument-coercion failures `0xbd9bce78957195ea58db291f46b0faeef9d1c51465b4552dabe92bd67185e0f6`, `0x14723ca12a4b58212bc8678e95927ee2026aa093f6c45a85ff36c1fee4842305` | Finalized majority-agree rollback receipts with leader `ERROR`; no unauthorized state mutation |
 
-### Final readback
+### Historical final readback (superseded deployment)
 
-The current corrected contract returns `get_counts = {communities:2, rooms:1, posts:4, cases:2}`. Community 1 is active with four members after the consented admission; community 2 is active with three members. Room 1 is active, preserves policy versions 1 and 2, and has `featured_post=0`. Case 1 is `CLOSED/NO_VIOLATION`; case 2 is `CLOSED/MINOR_BREACH` after an independently adjudicated appeal. Post 3 remains visible, post 4 remains hidden, and no restriction is active because the finding was minor. The six encrypted CLI keystores remain preserved.
+The superseded corrected deployment returned `get_counts = {communities:2, rooms:1, posts:4, cases:2}`. Community 1 was active with four members after the consented admission; community 2 was active with three members. Room 1 was active, preserved policy versions 1 and 2, and had `featured_post=0`. Case 1 was `CLOSED/NO_VIOLATION`; case 2 was `CLOSED/MINOR_BREACH` after an independently adjudicated appeal. This readback is retained as historical evidence only; it is not state on the current replacement address. The six encrypted CLI keystores remain preserved.
 
 ### Current browser-wallet limitation
 
