@@ -135,6 +135,9 @@ MUTATIONS = [
     ("restriction_capacity", "test_restriction_index_accepts_more_than_32_current_cases",
      "meta[\"count\"] += 1",
      "self._require(meta[\"count\"] < 32, \"restriction capacity reached\")\n        meta[\"count\"] += 1"),
+    ("restriction_pruning_order", "test_pruning_removes_expired_tail_behind_active_long_sanction",
+     "current = int(meta[\"tail\"])",
+     "current = int(meta[\"head\"])") ,
     ("sanction_expiry_persistence", "test_expired_appealed_sanction_survives_case_b_pruning_without_restart",
      "case[\"sanction_until\"] = until",
      "case[\"sanction_until\"] = 0"),
@@ -167,4 +170,4 @@ class SecurityMutations(unittest.TestCase):
         survivors=[name for name,status,_ in results if status=="survived"]
         print("MUTATION_REPORT=" + json.dumps(results, sort_keys=True))
         self.assertFalse(survivors, f"dangerous mutations survived: {survivors}; results={results}")
-        self.assertEqual(len(results),36)
+        self.assertEqual(len(results),37)

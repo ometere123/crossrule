@@ -23,16 +23,19 @@ describe('GenLayer signing and receipt safety gates',()=>{
   it('uses the explorer transaction detail route and numeric execution fields safely',()=>{
     const hash='0x'+'a'.repeat(64);
     expect(transactionUrl(hash)).toBe(`https://explorer-studio.genlayer.com/tx/${hash}`);
+    expect(receiptSucceeded({status:7,statusName:'Finalized',result:1,resultName:'MajorityAgree',txExecutionResult:1,txExecutionResultName:'FinishedWithReturn'})).toBe(true);
     expect(receiptSucceeded({status:7,result:6,txExecutionResult:1})).toBe(true);
     expect(receiptSucceeded({status:7,result:6,txExecutionResult:2})).toBe(false);
-    expect(receiptSucceeded({status:7,result:1,txExecutionResult:1})).toBe(true);
-    expect(classifyReceipt({status:11,result:1,txExecutionResult:1}).outcome).toBe('PENDING');
-    expect(classifyReceipt({status:13,result:2,txExecutionResult:1}).statusName).toBe('LEADER_REVEALING');
+    expect(receiptSucceeded({status:7,result:1,txExecutionResult:1})).toBe(false);
+    expect(classifyReceipt({status:11,statusName:'ValidatorsTimeout',result:2,resultName:'MajorityDisagree',txExecutionResult:1,txExecutionResultName:'FinishedWithReturn'}).outcome).toBe('PENDING');
+    expect(classifyReceipt({status:13,statusName:'LeaderRevealing',result:2,resultName:'MajorityDisagree',txExecutionResult:1,txExecutionResultName:'FinishedWithReturn'}).statusName).toBe('LEADER_REVEALING');
   });
   it('fails safely on contradictory, malformed, or incomplete evidence',()=>{
     expect(receiptSucceeded({statusName:'FINALIZED',resultName:'MAJORITY_DISAGREE',txExecutionResultName:'FINISHED_WITH_RETURN'})).toBe(false);
     expect(receiptSucceeded({statusName:'FINALIZED',resultName:'MAJORITY_AGREE',txExecutionResultName:'FINISHED_WITH_RETURN',tx_execution_result_name:'FINISHED_WITH_ERROR'})).toBe(false);
     expect(receiptSucceeded({status:7,result:99,txExecutionResult:1})).toBe(false);
+    expect(receiptSucceeded({status:7,statusName:'Finalized',result:1,resultName:'MajorityDisagree',txExecutionResult:1,txExecutionResultName:'FinishedWithReturn'})).toBe(false);
+    expect(classifyReceipt({status:7,result:1,txExecutionResult:1}).outcome).toBe('UNKNOWN');
     expect(receiptSucceeded({status:'FINALIZED',result:'MAJORITY_AGREE',txExecutionResult:'FINISHED_WITH_RETURN'})).toBe(true);
     expect(receiptSucceeded({status:'Finalized',result:'MajorityAgree',txExecutionResult:'FinishedWithReturn'})).toBe(true);
     expect(classifyReceipt({statusName:'FINALIZED',resultName:'MAJORITY_AGREE'}).outcome).toBe('UNKNOWN');

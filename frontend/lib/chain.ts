@@ -49,15 +49,43 @@ function normalizeEnum(value:unknown,numbers:Record<string,string>,names:Set<str
   }
   return undefined;
 }
-function resolveEnum(record:Record<string,unknown>,keys:string[],numbers:Record<string,string>,names:Set<string>,aliases:Record<string,string>={},allowNumeric=true):{value?:string;present:boolean;invalid:boolean} {
-  const values:string[]=[];let present=false;let invalid=false;
-  for(const key of keys){
+function numericCandidates(value:unknown,maps:Record<string,string>[]):string[] {
+  const key=typeof value==='number'&&Number.isInteger(value)?String(value):
+    typeof value==='string'&&/^\d+$/.test(value)?value:'';
+  if(!key)return [];
+  return [...new Set(maps.map(map=>map[key]).filter(Boolean))];
+}
+function resolvePairedEnum(record:Record<string,unknown>,nameKeys:string[],numericKeys:string[],maps:Record<string,string>[],names:Set<string>,aliases:Record<string,string>={}):{value?:string;present:boolean;invalid:boolean} {
+  const namedValues:string[]=[];let namedPresent=false;let invalid=false;
+  for(const key of nameKeys){
     if(!has(record,key))continue;
-    present=true;
-    const normalized=normalizeEnum(record[key],numbers,names,aliases,allowNumeric);
-    if(!normalized)invalid=true;else if(!values.includes(normalized))values.push(normalized);
+    const raw=record[key];
+    if(typeof raw==='number'||(typeof raw==='string'&&/^\d+$/.test(raw)))continue;
+    namedPresent=true;
+    const normalized=normalizeEnum(raw,{},names,aliases,false);
+    if(!normalized)invalid=true;else if(!namedValues.includes(normalized))namedValues.push(normalized);
   }
-  return {value:values.length===1?values[0]:undefined,present,invalid:invalid||values.length>1};
+  const candidateLists:string[][]=[];let numericPresent=false;
+  for(const key of numericKeys){
+    if(!has(record,key))continue;
+    const raw=record[key];
+    if(typeof raw!=='number'&&!(typeof raw==='string'&&/^\d+$/.test(raw)))continue;
+    numericPresent=true;
+    const candidates=numericCandidates(raw,maps);
+    if(!candidates.length)invalid=true;else candidateLists.push(candidates);
+  }
+  if(namedValues.length>1)invalid=true;
+  const namedValue=namedValues.length===1?namedValues[0]:undefined;
+  if(namedValue&&candidateLists.some(candidates=>!candidates.includes(namedValue)))invalid=true;
+  if(invalid)return {present:namedPresent||numericPresent,invalid:true};
+  if(namedValue)return {value:namedValue,present:true,invalid:false};
+  if(numericPresent){
+    const candidates=[...new Set(candidateLists.flat())];
+    // Ambiguous numeric-only values, such as result=1 (SDK AGREE versus
+    // raw-node MAJORITY_AGREE), must remain UNKNOWN rather than guessed.
+    return candidates.length===1?{value:candidates[0],present:true,invalid:false}:{present:true,invalid:true};
+  }
+  return {present:namedPresent,invalid:false};
 }
 function nestedConsensus(record:Record<string,unknown>):Record<string,unknown>|null {return asRecord(record.consensus_data)??asRecord(record.consensusData);}
 function leaderExecution(record:Record<string,unknown>):{value?:string;present:boolean;invalid:boolean} {
@@ -66,7 +94,7 @@ function leaderExecution(record:Record<string,unknown>):{value?:string;present:b
   if(!receipts.length)return {present:false,invalid:false};
   const leader=receipts.find(item=>asRecord(item)?.mode==='leader')??receipts[0];const value=asRecord(leader);
   if(!value)return {present:true,invalid:true};
-  return resolveEnum(value,['execution_result','executionResult','execution_result_name','executionResultName'],EXECUTION_BY_NUMBER,EXECUTION_NAMES,{SUCCESS:'FINISHED_WITH_RETURN',ERROR:'FINISHED_WITH_ERROR',FAILED:'FINISHED_WITH_ERROR',FAILURE:'FINISHED_WITH_ERROR'});
+  return resolvePairedEnum(value,['execution_result','executionResult','execution_result_name','executionResultName'],['execution_result','executionResult'],[EXECUTION_BY_NUMBER],EXECUTION_NAMES,{SUCCESS:'FINISHED_WITH_RETURN',ERROR:'FINISHED_WITH_ERROR',FAILED:'FINISHED_WITH_ERROR',FAILURE:'FINISHED_WITH_ERROR'});
 }
 
 /** Normalize full and simplified genlayer-js 1.1.8 StudioNet receipts. */
@@ -74,30 +102,15 @@ export function classifyReceipt(value:unknown):TransactionObservation {
   const record=asRecord(value);const hash=typeof record?.hash==='string'?record.hash:'';
   const unknown={hash,statusName:'UNKNOWN',executionResultName:'UNKNOWN',resultName:'UNKNOWN',finalized:false,successful:false,outcome:'UNKNOWN' as TransactionOutcome,consensusKnown:false,consensusSuccessful:false,executionKnown:false,executionSuccessful:false,authoritative:false};
   if(!record)return unknown;
-  const sdkNamedStatus=has(record,'statusName')||has(record,'status_name');
-  const sdkNamedResult=has(record,'resultName')||has(record,'result_name');
-  const numericResult=record.result;
-  // A raw node response is only accepted for its documented numeric result
-  // namespace when it is unambiguously distinguishable from the pinned SDK
-  // namespace.  Raw timeout status values are likewise accepted only with a
-  // raw majority result; otherwise an ambiguous numeric receipt is UNKNOWN.
-  const rawResultHint=!sdkNamedResult&&typeof numericResult==='number'&&
-    (numericResult===1||numericResult===2)&&
-    (typeof record.status==='number' || typeof record.txExecutionResult==='number');
-  const rawNumericResult=rawResultHint;
-  const statusNumbers=(!sdkNamedStatus&&rawResultHint&&typeof record.status==='number'&&
-                       RAW_NODE_STATUS_BY_NUMBER[String(record.status)]!==undefined)
-    ? RAW_NODE_STATUS_BY_NUMBER : SDK_STATUS_BY_NUMBER;
-  const resultNumbers=rawNumericResult?RAW_NODE_RESULT_BY_NUMBER:SDK_RESULT_BY_NUMBER;
-  const status=resolveEnum(record,['statusName','status_name','status'],statusNumbers,STATUS_NAMES);
-  const result=resolveEnum(record,['resultName','result_name','result'],resultNumbers,RESULT_NAMES);
+  const status=resolvePairedEnum(record,['statusName','status_name','status'],['status'],[SDK_STATUS_BY_NUMBER,RAW_NODE_STATUS_BY_NUMBER],STATUS_NAMES);
+  const result=resolvePairedEnum(record,['resultName','result_name','result'],['result'],[SDK_RESULT_BY_NUMBER,RAW_NODE_RESULT_BY_NUMBER],RESULT_NAMES);
   const lastRound=asRecord(record.last_round)??asRecord(record.lastRound);
-  const roundResult=lastRound?resolveEnum(lastRound,['resultName','result_name','result'],resultNumbers,RESULT_NAMES):{present:false,invalid:false} as {value?:string;present:boolean;invalid:boolean};
+  const roundResult=lastRound?resolvePairedEnum(lastRound,['resultName','result_name','result'],['result'],[SDK_RESULT_BY_NUMBER,RAW_NODE_RESULT_BY_NUMBER],RESULT_NAMES):{present:false,invalid:false} as {value?:string;present:boolean;invalid:boolean};
   const consensusCandidates=[result.value,roundResult.value].filter(Boolean) as string[];
   const consensusKnown=(result.present||roundResult.present)&&!result.invalid&&!roundResult.invalid&&consensusCandidates.length>0;
   const consensusName=consensusCandidates.length&&new Set(consensusCandidates).size===1?consensusCandidates[0]:undefined;
   const consensusInvalid=result.invalid||roundResult.invalid||new Set(consensusCandidates).size>1;
-  const explicitExecution=resolveEnum(record,['txExecutionResultName','tx_execution_result_name','txExecutionResult','tx_execution_result'],EXECUTION_BY_NUMBER,EXECUTION_NAMES,{SUCCESS:'FINISHED_WITH_RETURN',ERROR:'FINISHED_WITH_ERROR',FAILED:'FINISHED_WITH_ERROR',FAILURE:'FINISHED_WITH_ERROR'});
+  const explicitExecution=resolvePairedEnum(record,['txExecutionResultName','tx_execution_result_name','txExecutionResult','tx_execution_result'],['txExecutionResult','tx_execution_result'],[EXECUTION_BY_NUMBER],EXECUTION_NAMES,{SUCCESS:'FINISHED_WITH_RETURN',ERROR:'FINISHED_WITH_ERROR',FAILED:'FINISHED_WITH_ERROR',FAILURE:'FINISHED_WITH_ERROR'});
   const derivedExecution=leaderExecution(record);const executionValues=[explicitExecution.value,derivedExecution.value].filter(Boolean) as string[];
   const executionKnown=(explicitExecution.present||derivedExecution.present)&&!explicitExecution.invalid&&!derivedExecution.invalid&&executionValues.length>0;
   const executionName=executionValues.length&&new Set(executionValues).size===1?executionValues[0]:undefined;

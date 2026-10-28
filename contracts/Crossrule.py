@@ -689,12 +689,13 @@ class Crossrule(gl.Contract):
     def _restriction_meta(self, scope):
         raw = self.restriction_scope_index.get(scope, "")
         if not raw:
-            return {"head": 0, "count": 0}
+            return {"head": 0, "tail": 0, "count": 0}
         meta = json.loads(raw)
-        self._require(isinstance(meta, dict) and set(meta) == {"head", "count"},
+        self._require(isinstance(meta, dict) and set(meta) == {"head", "tail", "count"},
                       "restriction scope index corrupted")
-        self._require(type(meta["head"]) is int and type(meta["count"]) is int and
-                      meta["head"] >= 0 and meta["count"] >= 0,
+        self._require(type(meta["head"]) is int and type(meta["tail"]) is int and
+                      type(meta["count"]) is int and meta["head"] >= 0 and
+                      meta["tail"] >= 0 and meta["count"] >= 0,
                       "restriction scope index corrupted")
         return meta
 
@@ -716,10 +717,14 @@ class Crossrule(gl.Contract):
     def _refresh_restriction_index(self, scope):
         meta = self._restriction_meta(scope)
         if not meta["head"]:
+            self._require(meta["tail"] == 0 and meta["count"] == 0,
+                          "empty restriction index corrupted")
             self.restriction_until_index[scope] = "0"
             return
         head = self._restriction_node(scope, meta["head"])
         self._require(head is not None, "restriction head missing")
+        self._require(meta["tail"] != 0 and meta["count"] > 0,
+                      "non-empty restriction index corrupted")
         self.restriction_until_index[scope] = str(int(head["until"]))
 
     def _unlink_restriction(self, scope, case_id):
@@ -741,33 +746,36 @@ class Crossrule(gl.Contract):
             self._require(following is not None, "restriction next node missing")
             following["prev"] = prev_id
             self.restrictions[self._restriction_node_key(scope, next_id)] = self._dump(following)
+        else:
+            self._require(meta["tail"] == int(case_id), "restriction tail mismatch")
+            meta["tail"] = prev_id
         self._require(meta["count"] > 0, "restriction count underflow")
         meta["count"] -= 1
         if meta["count"] == 0:
-            meta["head"] = 0
+            meta["head"], meta["tail"] = 0, 0
         self.restriction_scope_index[scope] = self._dump(meta)
         del self.restrictions[self._restriction_node_key(scope, case_id)]
         self._refresh_restriction_index(scope)
 
     def _prune_restrictions(self, scope, now):
-        """Remove expired nodes from the head of the expiry-ordered index.
+        """Remove expired nodes from the tail of the expiry-ordered index.
 
-        Nodes are ordered from latest expiry to earliest expiry.  Therefore an
-        unexpired head proves that every later node is still active, and an
-        expired head means the remaining tail can be removed without scanning
-        immutable case history.  The loop is bounded by currently live
-        sanctions in this room/wallet scope, not by the number of old cases.
+        Nodes are ordered from latest expiry at the head to earliest expiry at
+        the tail.  An active head therefore says nothing about shorter-lived
+        sanctions at the tail.  Starting from the indexed tail removes the
+        expired suffix efficiently while retaining the direct maximum-expiry
+        lookup and avoiding any immutable case-history scan.
         """
         meta = self._restriction_meta(scope)
-        current = int(meta["head"])
+        current = int(meta["tail"])
         while current:
             node = self._restriction_node(scope, current)
-            self._require(node is not None, "restriction head missing")
+            self._require(node is not None, "restriction tail missing")
             if int(node["until"]) > int(now):
                 break
-            next_id = int(node["next"])
+            previous_id = int(node["prev"])
             self._unlink_restriction(scope, current)
-            current = next_id
+            current = previous_id
         self._refresh_restriction_index(scope)
 
     def _insert_restriction(self, scope, case_id, until):
@@ -778,7 +786,8 @@ class Crossrule(gl.Contract):
         current = int(meta["head"])
         previous_id = 0
         # Descending expiry order makes the current maximum a direct head
-        # lookup and keeps expiry pruning independent of historical cases.
+        # lookup, while the indexed tail makes expired suffix pruning bounded
+        # by currently active sanctions rather than historical cases.
         while current:
             node = self._restriction_node(scope, current)
             self._require(node is not None, "restriction node missing")
@@ -795,6 +804,8 @@ class Crossrule(gl.Contract):
             self.restrictions[self._restriction_node_key(scope, previous_id)] = self._dump(previous)
         else:
             meta["head"] = int(case_id)
+        if not current:
+            meta["tail"] = int(case_id)
         if current:
             following = self._restriction_node(scope, current)
             self._require(following is not None, "restriction next node missing")

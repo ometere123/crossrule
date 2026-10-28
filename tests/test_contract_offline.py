@@ -873,6 +873,20 @@ class CrossruleLifecycle(unittest.TestCase):
         self.contract._prune_restrictions(key,self.clock)
         self.assertEqual(self.record(self.contract.get_restriction(rid,self.wallets[0]))['entries'],[])
 
+    def test_pruning_removes_expired_tail_behind_active_long_sanction(self):
+        key=self.contract._restriction_key(91,self.wallets[0])
+        self.contract._insert_restriction(key,901,self.clock+3600)
+        self.contract._insert_restriction(key,902,self.clock-1)
+        self.contract._insert_restriction(key,903,self.clock-2)
+        self.contract._prune_restrictions(key,self.clock)
+        self.assertNotIn(self.contract._restriction_node_key(key,902), self.contract.restrictions)
+        self.assertNotIn(self.contract._restriction_node_key(key,903), self.contract.restrictions)
+        meta=json.loads(self.contract.restriction_scope_index[key])
+        self.assertEqual(meta['count'],1)
+        self.assertEqual(meta['head'],901)
+        self.assertEqual(meta['tail'],901)
+        self.assertEqual(self.contract.restriction_until_index[key],str(self.clock+3600))
+
     def test_current_restriction_lookup_does_not_read_case_history(self):
         rid,pid,cid=self.frozen_case()
         self.mock(finding('SERIOUS_BREACH'),finding('SERIOUS_BREACH'))
