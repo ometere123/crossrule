@@ -38,12 +38,12 @@ The contract enforces the deterministic boundaries: three distinct consenting fo
 
 * Frontend: [crossrule.vercel.app](https://crossrule.vercel.app)
 * Repository: [github.com/ometere123/crossrule](https://github.com/ometere123/crossrule)
-* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab)
+* Contract explorer: [StudioNet contract](https://explorer-studio.genlayer.com/address/0x673aF6595dA79799D86A8C0467D51088d9C935d4)
 * Deployment transaction: [finalized deployment](https://explorer-studio.genlayer.com/tx/0x8fb258e9a5caf28d10166cf6c5922c9ba39bc8a698a535cfcd622d741f9c2468)
 * Production frontend: [crossrule.vercel.app](https://crossrule.vercel.app), verified against the corrected contract after the latest READY deployment recorded in `docs/LIVE_EVIDENCE.md`
 * Live evidence: [`docs/LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md)
 * Consensus specification: [`docs/CONSENSUS.md`](CONSENSUS.md)
-* Latest full CI for the code-bearing release: [run 40684788894](https://github.com/ometere123/crossrule/actions/runs/40684788894), 9/9 jobs successful at `487faeffca20c2e2c139274eee473245023ae809`; the final docs/workflow metadata commit is validated by the newer run in the closeout report.
+* Latest full CI: the final successful run for the pushed release commit is linked from [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) and the closeout report.
 
 ## Production UI evidence
 
@@ -59,7 +59,7 @@ The public Accord Chamber interface was inspected at `https://crossrule.vercel.a
 
 ## Known limitations
 
-The final deployed address has finalized exact-byte source parity and a completed fresh six-CLI-wallet live social lifecycle: three active communities, one active room, six stable posts, three policy versions, four semantic cases, two appeals and finalized negative controls. A separate current-contract injected-wallet write also finalized successfully, creating community 4 in `FOUNDING` state; its transaction is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). No CLI key was imported into the browser. StudioNet receipts expose validator vote/status metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, six clauses, three context posts, at most three serial clause-distinct challenges per post, one application appeal per case, 20 records per public page and bounded active indexes; posts have no permanent lifetime cap. Dependency advisories are reported rather than hidden. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
+The corrected release uses exact-byte source parity and a fresh six-CLI-wallet lifecycle. Each post's immutable publication-time policy permits at most one serial challenge per distinct clause, never more than six; a later policy amendment cannot create a retrospective offense. No CLI key is imported into the browser. StudioNet receipts expose validator vote/status metadata and structured leader equivalence output, but not every validator's private prompt or reasoning; no private validator trace is claimed. Text is public and persistent. The contract is bounded at 12 members, six clauses, three context posts, one application appeal per case, 20 records per public page and bounded active indexes; posts have no permanent lifetime cap. Dependency advisories are reported rather than hidden. These are disclosed engineering limits, not claims of external audit or a self-awarded Portal score.
 
 ## Portal review framing
 

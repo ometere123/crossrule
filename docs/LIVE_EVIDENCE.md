@@ -1,5 +1,48 @@
 # CROSSRULE final hardening live evidence ledger
 
+## Current corrected release — authoritative section
+
+This section supersedes all older “current” blocks below. Older deployments, browser writes and lifecycle records remain historical evidence only.
+
+| Field | Observed value |
+| --- | --- |
+| Network | GenLayer StudioNet, chain `61999` |
+| RPC | `https://studio.genlayer.com/api` |
+| CLI / SDK | repository-local `genlayer@0.39.1` / `genlayer-js@1.1.8` |
+| Contract | [0x673aF6595dA79799D86A8C0467D51088d9C935d4](https://explorer-studio.genlayer.com/address/0x673aF6595dA79799D86A8C0467D51088d9C935d4) |
+| Deployment transaction | [0x82a04058051e61992916349ccdfde96c24d703ac09d4e1c16fe5d0c3dfb9f820](https://explorer-studio.genlayer.com/tx/0x82a04058051e61992916349ccdfde96c24d703ac09d4e1c16fe5d0c3dfb9f820) |
+| Deployment result | Raw StudioNet receipt: `FINALIZED`, `MAJORITY_AGREE`, leader `SUCCESS`; validator metadata exposed `AGREE/IDLE` participation |
+| Source commit | `12427cd5bd828fd6c8d9eb282fce797014d87934` |
+| Repository source | 56,884 LF bytes; SHA-256 `d4506d35a81b79c44190b6b0e91401c83e640f4b32bea226531fd246332d1d04` |
+| Decoded deployed source | 56,884 bytes; SHA-256 `d4506d35a81b79c44190b6b0e91401c83e640f4b32bea226531fd246332d1d04` |
+| Exact parity | `byteEqual: true`, checked with `scripts/verify_deployed_source.mjs` via `gen_getContractCode` |
+| Production frontend | [crossrule.vercel.app](https://crossrule.vercel.app), READY deployment [`dpl_9m4y5WSkEEF3RaZvm2RJ1JcsFZTP`](https://vercel.com/delealufejoel-4184s-projects/crossrule/9m4y5WSkEEF3RaZvm2RJ1JcsFZTP) |
+
+### Fresh six-wallet lifecycle
+
+The six CLI identities were distinct and their encrypted keystores remain preserved. The deployment and lifecycle used the pinned SDK signer; the CLI's address-argument coercion was separately retained as failed diagnostic evidence.
+
+| Stage | Finalized transaction(s) | Readback / result |
+| --- | --- | --- |
+| A founding | create `0x8f5691f080a3a3095c3e0e3c5bfef5f063000e73ce1b87f9f52c6e8e63eab9b9`; A2 `0x5eb741e11c5613d3e3091e906080fa0886dc622be148c0bb46dc0016bba60619`; A3 `0xe927ce58bc6c24ea9725662331f46a99ca9819b359713d473894f719ddcae3bc` | Community 1 `ACTIVE`, three founders plus the later admitted applicant |
+| B founding | create `0x4d048a30d07aa5b19aff10cdc0561ca9d5cdc04679fa6ee897c5b5709d678e04`; B2 `0x4d6ca98c1f734a0ead1a4593c32c63c57cd043be452f00ef5470808ea6281965`; B3 `0x4430ecfb21ac09e9d6fbb0d6a2d3ec98a0a02424933bdd07ad8a84bb9fecb784` | Community 2 `ACTIVE`, three distinct founders |
+| Admission | proposal `0x7835ed89a6095589c402c1aac28d6856eb79aa5f8c631a466ad4ecb34baaeb84`; applicant `0xf8380a6633a4c323b61c6cfa0b4b6dd0e0af93aed5189437e8df606e97a0e6d1`; votes `0x3d0149300d68e47970fcb18fa84dd82006462fe21b86cafe63a1c711f38f4c736`, `0x23fca68c0c926a419b34c11172f22aaae68fe53c776aa8554b5d5bf46a8f1fe44`; finalize `0xed3c154630e875c3032eb54551f6e04624da39069be216dfb5d33af0b46c57ae9` | Applicant consent was wallet-bound; frozen roster was three and threshold two |
+| Charter boundary | expired/non-passing vote finalizer `0xe0ec50959c0e055688270e8410637571cd7e706a3cf111d218738a466a811795` | The four-member follow-up needed three approvals and was correctly not treated as passed; the final live state preserves the original charter. |
+| Bilateral room | proposal `0xbc331ac52ab8a16cf83931e0c26e0780aec60e86c85601a3d97c8c5a9a514e88`; B1 consent `0xbbd41ff3aa16237987417bbce3406d82a333da57f52b60b1c082882e01f3ba2d`; A votes `0xc00813b6cbe91ee61cc03d6fc16202da8ef767a2c06fc9be500ab0ac0effe470`, `0xb4ac07d79ee271b749031794fe1f146e154026db5ea01d6ffb1811c42b4e8725`, `0x064bc0c949c6949c261bbec3cb90f75df6d93023aae371bd8d47175fe518868f`; B votes `0x541320bceb2469793991e0026d122294baa71b8a536779d7590c29c9b1a01368`, `0xfb47cc7bc14f9ab71610aa2fa710e81e01510a4fa6cabbacf7a1c938fc38e5dd`; finalize `0x5c5790e4737ec2c865b7d985e379bc0642ec630f6091971f7d14931866cc6694` | Independent A/B thresholds; room 1 `ACTIVE` |
+| Posts and feature governance | post `0xf1b3fafc1984afc7459d1a23b7a444bdddef0121f936c6c941f82ff83d862997`; reply `0xa3470344c2f8ba2146c1c8a92da1e8c858cede882d08efab0f4df062f8c94284`; feature proposal `0x843d289d47e36d290e18beab41b2a0de41e8553f9f3954c24fe5c2e26048c96d`, finalize `0x5121f8a2146ae635eaab8b21595c835de6b4257621c9264bca2e59306ed26538`; unfeature proposal `0xa2e191cc094cc46620c6b303b07cda648d08ad92135b04b1429f2f2e2a0109b9`, finalize `0x1472d231b013e6e70a96a05f89acd40424e3a6903a2a78484cdbe23b79b862bc` | Post/reply read back; feature was approved and later removed; final `featured_post=0` |
+| Policy amendment | proposal `0x1194e092a13edfeb6cc407e50f88026c4dca57d739616c703bc8b22325cb1bf0`; parallel votes `0xa8f824123a87534ef41f2db1a56e1af5484c0c2180df3021ef4aafd2a33ae474`, `0x9f3cbb5b1bca0c8c62cdcb0bba336b1856282be845af433f86ad9d00304d1b7e`, `0x10bc6f9533c85f5720ec003c4737efb2fc30364fd511e0a0ffcd33b8ad1b4452`, `0x1b4f19c4cc8b22ab7d3b248d684edc9a51654440cf8cff9b2ca318b4602de9ad`, `0xd887d6dd879b96f76d07aef5319ba705e4a54fa429e7e21f1af45084ce49c723`; finalize `0xc552d8417faa15aede5d92f1aa6207188469bd662b82f788362d00ee08c26221` | Policy v1 preserved; policy v2 became active before cases 1–2 were published |
+| Case 1 | open `0x9fd727dd88fad4b8ca688912be01d4f454b9bc0cf8cfa55c366310969f1068b6`; defense `0x3df896a72f04ef176ef683ce447aa67ebf4e3d580793463b0a4e7ffbf318bc91`; freeze `0x1bedd52edada08c2470ba76822763f0b2d977b3c5ba7273d66b8929397184709`; adjudicate `0xceb8753f53c3d57da35f40df666f8a07173337a35564682e260819d5e5624f17`; close `0x690cbf1a20e52f8573356d0330b44e04d9b5716991d38f3c82dde83638cefc64` | Digest `f1a9ac10ee114d154e1de7c3602084817a9b3eb70fc3ae84d574a87930870a0d`; finalized `NO_VIOLATION`; post 3 visible; case closed |
+| Case 2 + appeal | open `0xb1051934f93d4211630ae4f910c9966a135e8cf185ccf24464c18833dcda4bc3`; defense `0xe6679c5572500a78927a4ae66fb535d6a8082e86a196be57236bb5cf0b521eee`; freeze `0xce773efca679487bca45b2997b82f026a10ffc70da9c6f8c58d94e84ac437486`; adjudicate `0x1367998639ea9132a94ab969b10b8fab99b55e9a7ce7035b15fe224a2727267d`; appeal `0xdb7beeb1ba7303a032027da22371fc81b797f866bb6db95ca55d789fb6393f36`; response `0x3c8a532d7a24f22ff4a59339d1ecf2699fb5e566b100dc140718769c9edeacd1`; freeze `0x48abbb852694c233e18056dc063a5d9dda4e44f272a6bc781068587d01d54527`; appellate adjudication `0xe9ed5563c036eb601764fa7f99f6b0f7942e4050933b3a09ec25ea31a43df21d` | Original digest `0c02469f4bd749dc86f33f713e4f48ed60bc2db140cd7cefeb54be2b2bcf5d75`; appeal digest `8221bdf85fa3f25a88d830239e90ea2596d4c099a55f715eeb70b99805172ba2`; original and appellate `MINOR_BREACH`; post 4 remains hidden; case closed |
+| Negative controls | outsider publish `0x4e70e108cbf6fa9ed0952ec4c54c6a8817e2a069feb4ba36194952c3a14106bc`; duplicate-clause challenge `0xa25b4dc9f1424885a7d7217ba9ba438c224767fcf8fa400a888ad1b0b03e7d5f`; earlier CLI argument-coercion failures `0xbd9bce78957195ea58db291f46b0faeef9d1c51465b4552dabe92bd67185e0f6`, `0x14723ca12a4b58212bc8678e95927ee2026aa093f6c45a85ff36c1fee4842305` | Finalized majority-agree rollback receipts with leader `ERROR`; no unauthorized state mutation |
+
+### Final readback
+
+The current corrected contract returns `get_counts = {communities:2, rooms:1, posts:4, cases:2}`. Community 1 is active with four members after the consented admission; community 2 is active with three members. Room 1 is active, preserves policy versions 1 and 2, and has `featured_post=0`. Case 1 is `CLOSED/NO_VIOLATION`; case 2 is `CLOSED/MINOR_BREACH` after an independently adjudicated appeal. Post 3 remains visible, post 4 remains hidden, and no restriction is active because the finding was minor. The six encrypted CLI keystores remain preserved.
+
+### Current browser-wallet limitation
+
+The prior browser-signed registration belongs to a superseded deployment and remains historical only. A fresh injected-wallet write against this corrected address was prepared but could not be completed through the current Convert Chrome automation session: the selected tab was not claimable by the UI bridge, which stopped before any wallet prompt or signature. No browser signature is claimed for the corrected address. CLI lifecycle evidence above is genuine and separate from mocked browser tests.
+
 This top section is the current release record. Earlier sections below are retained and explicitly labelled historical/superseded; they must not be used as evidence for the current address.
 
 ## Current source-matched StudioNet deployment

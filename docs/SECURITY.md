@@ -30,7 +30,7 @@
 
 ## Known operational limits
 
-- Exact contract limits: at most 12 wallets per community, 1–6 clauses per joint agreement, up to 3 older same-room context posts, at most 3 serial clause-distinct challenges per post, one app appeal per case, at most 20 records per public page, 64 retained policy/charter history entries and 32 pending room proposals globally. Posts have stable IDs and room-scoped pagination; there is no permanent 150-post lifetime cap.
+- Exact contract limits: at most 12 wallets per community, 1–6 clauses per joint agreement, up to 3 older same-room context posts, at most one serial challenge per distinct clause in the post's publication-time policy (never more than six), one app appeal per case, at most 20 records per public page, 64 retained policy/charter history entries and 32 pending room proposals globally. Posts have stable IDs and room-scoped pagination; there is no permanent 150-post lifetime cap.
 - All author, defense, context and allegation text is public **regardless of UI status**. Never post secrets, identifying information that requires protection, privileged documents, or private health information.
 - A wallet can create several communities with separate wallets; CROSSRULE is not a KYC or sybil-resistant identity system.
 - Default web RPC infrastructure is external and may be unavailable. The source app has no independently powered backend or fallback transaction writer.
@@ -38,7 +38,7 @@
 - The 2–10,080 minute settings are **application deadlines**, not GenLayer's protocol appeal period or finality rules.
 - No one automatically calls `freeze_case`, `freeze_appeal`, `adjudicate_case`, `adjudicate_appeal`, `close_case`, or vote finalizers. Eligible community members must submit transactions; others may submit finalization calls where the contract allows it.
 - Public enumeration is bounded to page size 20 and stored IDs. This is not an indexer or search engine.
-- The bounded challenge policy permits up to three serial clause-specific proceedings per post. It prevents duplicate-clause harassment and simultaneous contradictory sanctions, while allowing a legitimate later clause after a prior case reaches a non-breach terminal state. An upheld breach blocks additional proceedings against that post.
+- The bounded challenge policy permits one serial clause-specific proceeding for each distinct clause in the immutable publication-time policy, capped at six. It prevents duplicate-clause harassment and simultaneous contradictory sanctions, while allowing a legitimate later clause after a prior case reaches a non-breach terminal state. An upheld breach blocks additional proceedings against that post.
 - Contract source has no token transfer or withdrawal method; GEN is only network gas/fee asset. Do not send arbitrary funds to the contract.
 
 ## Reviewer security tests
@@ -60,7 +60,7 @@ The audit found and corrected the following high-risk paths:
 * Evidence and appeal digests use canonical sorted-key UTF-8 JSON and are recomputed before each corresponding adjudication.
 * Validator assessment independently recomputes the decision-bearing finding, clause and material anchor support; valid JSON or an irrelevant genuine substring cannot authorize a sanction.
 * A hidden post cannot remain the active featured post, restored visibility does not silently restore a previous feature endorsement, serious findings require serious-authorized clauses, and restrictions are keyed by both room and wallet.
-* Challenge finality is bounded and serial: duplicate clauses, simultaneous unresolved cases and proceedings after an upheld breach are rejected; a restored or appealed post may only proceed under another applicable clause after the prior case reaches an allowed non-breach terminal state, and never beyond the three-case bound.
+* Challenge finality is bounded and serial: duplicate clauses, simultaneous unresolved cases and proceedings after an upheld breach are rejected; a restored or appealed post may only proceed under another applicable publication-time clause after the prior case reaches an allowed non-breach terminal state, and never beyond the six-clause policy bound.
 * Appeal reversal removes only its own restriction; an upheld serious appeal preserves the original expiry instead of restarting it.
 * The frontend now validates bounded arguments, tracks account/network changes, prevents duplicate writes after unknown outcomes, and requires finalized successful execution before announcing success.
 

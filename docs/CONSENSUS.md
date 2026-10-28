@@ -2,7 +2,7 @@
 
 ## Why GenLayer is necessary
 
-The contract can validate membership, IDs, deadlines, byte bounds, policy versions and evidence provenance deterministically. It cannot decide whether a human-written post semantically violates a jointly ratified clause. That subjective step is deliberately executed through GenLayer's nondeterministic leader/validator path. Removing that path would remove the trust boundary that distinguishes CROSSRULE from a CRUD feed with a centralized moderator.
+The contract can validate membership, IDs, deadlines, byte bounds, publication-time policy versions and evidence provenance deterministically. It cannot decide whether a human-written post semantically violates a jointly ratified clause. That subjective step is deliberately executed through GenLayer's nondeterministic leader/validator path. Removing that path would remove the trust boundary that distinguishes CROSSRULE from a CRUD feed with a centralized moderator.
 
 ## Frozen input
 

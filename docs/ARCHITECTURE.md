@@ -70,7 +70,7 @@ The one contract stores ordered JSON records inside GenLayer `TreeMap` primitive
 | `communities` | Monotonic ID; name, description, founders, consents, members, versioned charters, active votes | 3 consenting founders, 12-member cap, two-thirds charter/admission threshold, 1 active vote per type |
 | `rooms` | Monotonic ID; two community IDs, consent/votes, status, agreement policy snapshots, version, post count, feature vote | Distinct community IDs; disjoint member rosters; counterpart consent before ratification; separate two-thirds threshold each side |
 | `posts` + `room_post_index` | Monotonic global ID plus `${roomId}:${ordinal}` → post ID index | Author/parent remain stable; deterministic bounded pages; hidden means hidden from app feed, not erased; no lifetime room cap |
-| `cases` | Monotonic ID; frozen clause, agreement version, context, author, reporter, defense, decision, appeal | One challenge per post; immutable evidence inputs hashed before LLM call; one app appeal |
+| `cases` | Monotonic ID; frozen clause, publication-time agreement version, context, author, reporter, defense, decision, appeal and first serious sanction expiry | One serial challenge per distinct publication-time clause, bounded by the frozen policy; immutable evidence inputs hashed before LLM call; one app appeal |
 | `restrictions` | `${roomId}:${lowercaseWallet}` with case IDs and expiry timestamps | Case-scoped suspension only on allowed serious breaches; reversal removes its own entry; upheld appeal preserves original expiry |
 
 ### Community state
@@ -166,7 +166,7 @@ The browser has no private-key imports, mnemonic field, secret-bearing server ro
 
 ## Deployed record used for review
 
-The current source-matched StudioNet deployment at `0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab` reads three active communities, one active room, six posts and four cases. The active room preserves policy versions 1–3; case 1 is a closed `NO_VIOLATION`, and cases 2–4 are serious findings with preserved original/appellate records where appealed. These are public records, not frontend fixtures. See [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md) for transaction-level provenance.
+The current source-matched StudioNet deployment is recorded at the top of [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Earlier addresses in that ledger are explicitly historical. The deployed contract is the only authority for communities, rooms, posts, cases and restrictions; counts and records shown by the public app are not frontend fixtures.
 
 The deployed source was validated by the genuine GenVM linter as 38 methods: 10 views and 28 writes. `Crossrule.py` is the only authoritative state transition layer. The web app cannot manufacture a community, policy, case, receipt or adjudication result.
 

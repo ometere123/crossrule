@@ -4,7 +4,7 @@ The numbers **5/5/5/5 are a target for Portal review**, not a self-awarded score
 
 ## Current observed results
 
-The current hardening run reports: Python offline `66 passed`; genuine GenVM Direct Mode `24 passed` with the documented Windows temp-file shim (Linux CI runs the genuine runner without that local shim); purposeful mutation suite `34/34 killed`; GenVM linter passed; frontend ESLint pass; TypeScript strict pass; Vitest `14 passed`; Next production build pass; local Playwright `16 passed` across Chromium and mobile Chromium; production Playwright `16 passed` against `https://crossrule.vercel.app`. The corrected deployment is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md): contract `0xD7510Ee01F9A922D0808f5160f83C96C491cc2Ab`, four communities total (three active plus one browser-created founding record), one active room, six posts, four semantic cases and two application appeals. The exact contract source SHA is `8d4ea453bcb15aafff493f9d8ae2de186bd9482b10635857fc0ff8585f3b21b2`.
+The current hardening run reports: Python offline `70 passed`; genuine GenVM Direct Mode `25 passed` with the documented Windows temp-file shim (Linux CI runs the genuine runner without that local shim); purposeful mutation suite `36/36 killed`; GenVM linter passed; frontend ESLint pass; TypeScript strict pass; Vitest `14 passed`; Next production build pass; local mocked lifecycle Playwright `18 passed` across Chromium and mobile Chromium. The corrected deployment is recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md): contract `0x673aF6595dA79799D86A8C0467D51088d9C935d4`, two fresh active communities, one active room, four fresh posts, two semantic cases and one completed appeal. The exact contract source SHA is `d4506d35a81b79c44190b6b0e91401c83e640f4b32bea226531fd246332d1d04`.
 
 The contract deployment, source parity and completed six-wallet social lifecycle are recorded in [`LIVE_EVIDENCE.md`](LIVE_EVIDENCE.md). Deployment initialization, public reads, semantic adjudications and the application appeal were live-verified; receipts and readbacks are the authority.
 
@@ -47,7 +47,7 @@ The contract deployment, source parity and completed six-wallet social lifecycle
 - Appeal reversal restores post and removes its restriction.
 - Appeal upholding a serious finding does not extend earlier suspension.
 - Only adversely affected party may appeal; one application appeal per case.
-- Up to three serial clause-specific challenge proceedings per post; duplicate clauses, simultaneous unresolved cases and proceedings after an upheld breach are rejected.
+- Up to six serial clause-specific challenge proceedings per post, derived from the publication-time policy's distinct clauses; duplicate clauses, simultaneous unresolved cases and proceedings after an upheld breach are rejected.
 - Restored visibility does not silently restore a prior feature endorsement; a fresh bilateral feature vote is required.
 - Frozen evidence hash and original policy version unchanged by later amendments.
 - Malformed context IDs rejected before reading.
