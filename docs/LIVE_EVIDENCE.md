@@ -18,10 +18,25 @@ This is the current source-matched deployment. It supersedes every earlier addre
 | Exact parity | `byteEqual: true`, checked with `scripts/verify_deployed_source.mjs` via `gen_getContractCode` |
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; community, room and case lists were empty |
 | Production frontend | [crossrule.vercel.app](https://crossrule.vercel.app), READY deployment [`dpl_cTpND7kgGZdx3CiEMJsQ9DyPVYNL`](https://vercel.com/delealufejoel-4184s-projects/crossrule/cTpND7kgGZdx3CiEMJsQ9DyPVYNL), configured for the current address |
-| Current browser-wallet evidence | Not claimed yet. A current-contract Convert Chrome signature requires a user-approved prompt followed by receipt and state readback. |
+| Current browser-wallet evidence | [0xf23b6f9e110bac28abc6fad85c58cf35e6f30682ffb7f365a67e5922deb30af4](https://explorer-studio.genlayer.com/tx/0xf23b6f9e110bac28abc6fad85c58cf35e6f30682ffb7f365a67e5922deb30af4), manually approved in Convert Chrome by `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b`; `FINALIZED`, `MAJORITY_AGREE`, leader `SUCCESS` |
 | Current six-wallet lifecycle | Not claimed yet. The lifecycle rows below belong to superseded deployments unless explicitly labelled otherwise. |
 
-The deployment receipt proves deployment consensus and successful leader execution. It is not semantic moderation evidence. Current-contract application records must be appended only after genuine StudioNet transactions and readbacks.
+The deployment receipt proves deployment consensus and successful leader execution. It is not semantic moderation evidence. The current browser write is a genuine current-contract founding transaction, not semantic moderation evidence: it created community `1` in `FOUNDING` state. The full six-wallet governance/moderation lifecycle remains historical until repeated against this replacement address.
+
+### Current Convert Chrome wallet write
+
+| Field | Observed value |
+| --- | --- |
+| Browser/profile | Convert Chrome, injected EIP-1193 wallet; user manually approved the wallet prompt |
+| Signing wallet | `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b` |
+| Contract / chain | `0x52216B878474b97897b3878071eBF92DB42cd0E0` / StudioNet `61999` |
+| Method | `create_community` |
+| Public inputs | `Convert Chamber Builders`; description and charter were the prepared synthetic engineering-governance text; founders `0x23187BF36c9B935189cDa33DEEEc6912bC2A211B` and `0x1F21Be13E3Fd277C5D3115b7Fb8135de19A427F5`; voting window `5` minutes |
+| Transaction | [0xf23b6f9e110bac28abc6fad85c58cf35e6f30682ffb7f365a67e5922deb30af4](https://explorer-studio.genlayer.com/tx/0xf23b6f9e110bac28abc6fad85c58cf35e6f30682ffb7f365a67e5922deb30af4) |
+| Receipt | `status=7 / FINALIZED`, `result=6 / MAJORITY_AGREE`, leader execution `SUCCESS`; observable validator metadata `AGREE, AGREE, IDLE, IDLE, AGREE` |
+| UI verification | Production UI reported `Finalized · execution succeeded` and preserved the explorer link after reconciliation |
+| Contract readback | `get_counts = {communities:1, rooms:0, posts:0, cases:0}`; `list_communities` returned community `1`, `Convert Chamber Builders`, `FOUNDING` |
+| Scope | This proves one genuine current-contract browser-signed write and state readback. It does not claim founder acceptance, active community governance, bilateral room ratification or current semantic adjudication. |
 
 ## Historical corrected release — superseded
 
@@ -64,7 +79,7 @@ The superseded corrected deployment returned `get_counts = {communities:2, rooms
 
 ### Current browser-wallet limitation
 
-The prior browser-signed registration belongs to a superseded deployment and remains historical only. A fresh injected-wallet write against this corrected address was prepared but could not be completed through the current Convert Chrome automation session: the selected tab was not claimable by the UI bridge, which stopped before any wallet prompt or signature. No browser signature is claimed for the corrected address. CLI lifecycle evidence above is genuine and separate from mocked browser tests.
+The current-contract browser write is recorded above. The prior browser-signed registration against a superseded deployment remains historical only. CLI lifecycle evidence below is genuine and separate from mocked browser tests.
 
 This top section is the current release record. Earlier sections below are retained and explicitly labelled historical/superseded; they must not be used as evidence for the current address.
 

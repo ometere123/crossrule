@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the final hardening source is pushed to `main`, the corrected contract is deployed to StudioNet with exact source parity, and the Accord Chamber frontend is live on Vercel. The replacement deployment was verified with empty initial state; the earlier six-wallet lifecycle and browser signature remain explicitly historical evidence for superseded deployments. A current-contract Convert Chrome signature is not claimed until the user-approved wallet prompt produces a receipt and readback. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact provenance, tests, receipts and limitations.
+**Current release status:** the final hardening source is pushed to `main`, the corrected contract is deployed to StudioNet with exact source parity, and the Accord Chamber frontend is live on Vercel. A genuine Convert Chrome wallet write against the current contract has now finalized successfully and read back a real `FOUNDING` community. The earlier six-wallet lifecycle remains explicitly historical evidence for superseded deployments. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact provenance, tests, receipts and limitations.
 
 ## Exact stack
 
@@ -35,11 +35,11 @@ Do not upgrade to the Bradbury/consensus-v0.6 SDK family within this locked Stud
 | Source | SHA-256 `bd7af33a291f9c3d26d36422cf4f0cdc1dd9ef63454b50d7a4e48e1b7901c104`, contract-source commit `bb614994ea4f4d2235ef18dc01437b51e31e3197` |
 | Receipt | `FINALIZED` + `MAJORITY_AGREE` + leader `SUCCESS`; decoded deployed source matched the committed LF bytes exactly (57,518 bytes) |
 
-The replacement contract's immediate StudioNet readback is empty: `get_counts = {communities:0, rooms:0, posts:0, cases:0}`, with empty community, room and case lists. Existing lifecycle records below are historical and are not represented as state on this replacement address.
+The replacement contract's immediate post-deployment StudioNet readback was empty: `get_counts = {communities:0, rooms:0, posts:0, cases:0}`, with empty community, room and case lists. A subsequent user-approved Convert Chrome write created community `1` in `FOUNDING` state; the full historical lifecycle below is not represented on this replacement address.
 
 The production Accord Chamber was checked at 1440, 1280, 1024, 768, 390 and 375 CSS pixels with no horizontal overflow, no page errors and no console errors. Representative captures: [desktop hero](docs/screenshots/accord-hero-1440.png), [mobile hero](docs/screenshots/accord-hero-390.png), and [full desktop page](docs/screenshots/accord-1440.png).
 
-The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22. The READY production deployment above was checked at the public alias and is configured for the replacement address; its public records are therefore empty until a fresh authorized lifecycle is executed.
+The production build uses `NEXT_PUBLIC_CROSSRULE_CONTRACT_ADDRESS` only. The RPC and chain are public network configuration, not secrets; PRAEST credentials are never placed in Vercel. The Vercel project root is `frontend` and the deployment is built with Node 22. The READY production deployment above was checked at the public alias and is configured for the replacement address; its current records begin with the verified `FOUNDING` community and remain otherwise empty until a fresh authorized lifecycle is executed.
 
 ## Product in one story
 
