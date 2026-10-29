@@ -19,9 +19,10 @@ This is the current source-matched deployment. It supersedes every earlier addre
 | Initial readback | `get_counts = {communities:0, rooms:0, posts:0, cases:0}`; community, room and case lists were empty |
 | Production frontend | [crossrule.vercel.app](https://crossrule.vercel.app), READY deployment [`dpl_cTpND7kgGZdx3CiEMJsQ9DyPVYNL`](https://vercel.com/delealufejoel-4184s-projects/crossrule/cTpND7kgGZdx3CiEMJsQ9DyPVYNL), configured for the current address |
 | Current browser-wallet evidence | [0xf23b6f9e110bac28abc6fad85c58cf35e6f30682ffb7f365a67e5922deb30af4](https://explorer-studio.genlayer.com/tx/0xf23b6f9e110bac28abc6fad85c58cf35e6f30682ffb7f365a67e5922deb30af4), manually approved in Convert Chrome by `0x7e2a8d765e0e346C451109eb42D92f61FBdbfd4b`; `FINALIZED`, `MAJORITY_AGREE`, leader `SUCCESS` |
-| Current six-wallet lifecycle | Not claimed yet. The lifecycle rows below belong to superseded deployments unless explicitly labelled otherwise. |
+| Lifecycle records | The dated six-wallet records below identify their deployment addresses; the current browser founding record appears immediately below. |
+| Verified CI | [9/9 jobs passed at `c35db6dc56363afdc5ed434aecee7308a6cebf9e`](https://github.com/ometere123/crossrule/actions/runs/40819102351) |
 
-The deployment receipt proves deployment consensus and successful leader execution. It is not semantic moderation evidence. The current browser write is a genuine current-contract founding transaction, not semantic moderation evidence: it created community `1` in `FOUNDING` state. The full six-wallet governance/moderation lifecycle remains historical until repeated against this replacement address.
+The deployment receipt records deployment consensus and successful leader execution. The approved production-browser transaction created community `1`, `Convert Chamber Builders`, in `FOUNDING` state. Each governance or semantic-adjudication record below retains its own contract address and transaction provenance.
 
 ### Current Convert Chrome wallet write
 

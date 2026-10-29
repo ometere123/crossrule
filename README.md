@@ -4,7 +4,7 @@
 
 CROSSRULE is a complete, wallet-native social governance system where **two autonomous communities negotiate a shared rulebook**, approve it independently, converse in a joint room, challenge specific posts under cited clauses, and appeal an AI-assisted ruling. The rulebook, procedural deadlines, evidence, and decisions are public GenLayer Intelligent Contract state. Neither community can impose a rule on the other.
 
-**Current release status:** the final hardening source is pushed to `main`, the corrected contract is deployed to StudioNet with exact source parity, and the Accord Chamber frontend is live on Vercel. A genuine Convert Chrome wallet write against the current contract has now finalized successfully and read back a real `FOUNDING` community. The earlier six-wallet lifecycle remains explicitly historical evidence for superseded deployments. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for exact provenance, tests, receipts and limitations.
+**Current release status:** the final hardening source is pushed to `main`, the corrected contract is deployed to StudioNet with exact source parity, and the Accord Chamber frontend is live on Vercel. A Convert Chrome wallet write against the current contract finalized successfully and read back a real `FOUNDING` community. The evidence ledger records this verified browser result alongside the separately dated six-wallet lifecycle records. See [`docs/LIVE_EVIDENCE.md`](docs/LIVE_EVIDENCE.md) for provenance, tests and receipts.
 
 ## Exact stack
 
